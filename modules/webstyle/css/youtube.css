@@ -1,0 +1,174 @@
+/* Youtube CSS */
+.post-auth{
+  float: left;
+  width: 100%;
+  display: none;
+}
+#youtube-plugin{
+  max-width: 600px;
+  min-height: 0px;
+}
+#youtube-plugin-container{
+  width: 100%;
+  display: inline-block;
+}
+/* Youtube not linked account */
+.pre-auth{
+  text-align: center;
+}
+/* Youtube profile header */
+#youtube-profile.linkedProfile{
+  display: inline-block;
+  width: 100%;
+  margin: 0 0 10px 0;
+  padding: 0 0 10px 0;
+  border-bottom: 1px solid #ddd;
+}
+.youtube-profile-right{
+  float: left;
+}
+.youtube-profile-left{
+  float: left;
+}
+.youtube-profile-left img{
+  width: 28px;
+}
+.youtube-profile-right a:link{
+  text-decoration: none;
+}
+.youtube-profile-right h2{
+  margin: 0;
+  padding-left: 10px;
+  font-size: 14px;
+  line-height: 28px;
+}
+/* Youtube container */
+#youtube-container{
+  display: inline-block;
+  width: 100%;
+}
+/* Youtube form */
+#push_to_youtube{
+  width: 100%;
+}
+#push_to_youtube fieldset{
+  border: none;
+  padding: 0;
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+#push_to_youtube legend{
+  font-size: 14px;
+  width: 100%;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+}
+#push_to_youtube label{
+  width: 100%;
+  margin: 10px 0 5px 0;
+  display: inline-block;
+  font-size: 15px;
+}
+#push_to_youtube input,
+#push_to_youtube textarea,
+#push_to_youtube select{
+  width: 98%;
+  max-width: 600px;
+  font-size: 14px;
+}
+#push_to_youtube input,
+#push_to_youtube textarea{
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+#push_to_youtube .help-text{
+  text-align: right;
+  display: inherit;
+  font-size: 11px;
+  color: #999;
+}
+#push_to_youtube #youtube-submit{
+  margin: 20px 0;
+  cursor: pointer;
+  width: 100%;
+  background: #eee;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 10px;
+  color: #333;
+}
+#push_to_youtube #youtube-submit{
+  margin: 20px 0;
+  cursor: pointer;
+  width: 100%;
+  background: #eee;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 10px;
+}
+#push_to_youtube #youtube-submit:hover{
+  background: #ccc;
+}
+#push_to_youtube #youtube-submit:disabled{
+  cursor: not-allowed!important;
+}
+/* Error messages */
+#messages{
+  border-radius: 3px;
+  font-size: 14px;
+  display: none;
+}
+#messages > div{
+  padding: 10px;
+  border-radius: 3px;
+  margin: 10px 0;
+}
+#messages .error{
+  background: #ecd9d9;
+  border: 1px solid #ebccd1;
+  color: #a94442;
+}
+#messages .success{
+  border: 1px solid #d6e9c6;
+  background: #ddeed6;
+  color: #3c7655;
+}
+#messages .warn{
+  color: #8a6d3b;
+  background: #fcf8e3;
+  border: 1px solid #faebcc;
+}
+#messages .notice{
+  background: none;
+  border: none;
+}
+.sign-info{
+  font-size: 12px;
+  color: #888;
+}
+
+.open-push-to-youtube img{
+  line-height: 20px;
+  margin-right: 5px;
+  float: left;
+}
+
+.open-push-to-youtube{
+  text-decoration: none;
+  line-height: 18px;
+  float: left;
+  background: #eee!important;
+  border: 1px solid #ddd;
+  padding: 5px;
+  color: #333!important;
+}
+
+.open-push-to-youtube:hover{
+  text-decoration: none;
+  background: #ddd;
+  border: 1px solid #bbb;
+}

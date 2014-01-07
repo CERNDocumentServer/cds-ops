@@ -393,7 +393,8 @@ table, td {
 /* ----------------  DOWNLOAD BUTTON --------------- */
 
 /* Video download button */
-#video_download_button {
+#video_download_button,
+.video_button {
 	margin: 5px 10px;
 	float: right;
 	font-size: 12px;
@@ -420,7 +421,8 @@ table, td {
 }
 
 /* Video download button hover */
-#video_download_button:hover {
+#video_download_button:hover,
+.video_button:hover {
 	cursor:pointer;
 	color: #FFF;
 	background: rgb(125,126,125); /* Old browsers */
@@ -434,7 +436,8 @@ table, td {
 }
 
 /* Video download button click */
-#video_download_button:active {
+#video_download_button:active,
+.video_button:active {
 	cursor:pointer;
 	color: #FFF;
 	background: rgb(58,58,58); /* Old browsers */

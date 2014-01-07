@@ -301,6 +301,12 @@ except:
     register_exception(alert_admin=True, subject='EMERGENCY')
     WebInterfaceAuthorlistPages = WebInterfaceDumbPages
 
+try:
+    from invenio.bibencode_youtube import WebInterfaceYoutube
+except:
+    register_exception(alert_admin=True, subject='EMERGENCY')
+    WebInterfaceYoutube = WebInterfaceDumbPages
+
 if CFG_OPENAIRE_SITE:
     try:
         from invenio.openaire_deposit_webinterface import \
@@ -369,6 +375,7 @@ class WebInterfaceInvenio(WebInterfaceSearchInterfacePages):
                    'goto',
                    'info',
                    'authorlist',
+                   'youtube',
                ] + test_exports + openaire_exports
 
     def __init__(self):
@@ -410,6 +417,7 @@ class WebInterfaceInvenio(WebInterfaceSearchInterfacePages):
         yourcomments = WebInterfaceDisabledPages()
         goto = WebInterfaceDisabledPages()
         authorlist = WebInterfaceDisabledPages()
+        youtube = WebInterfaceYoutube()
     else:
         submit = WebInterfaceSubmitPages()
         youraccount = WebInterfaceYourAccountPages()
@@ -442,7 +450,7 @@ class WebInterfaceInvenio(WebInterfaceSearchInterfacePages):
         yourcomments = WebInterfaceYourCommentsPages()
         goto = WebInterfaceGotoPages()
         authorlist = WebInterfaceAuthorlistPages()
-
+        youtube = WebInterfaceYoutube()
 
 # This creates the 'handler' function, which will be invoked directly
 # by mod_python.
