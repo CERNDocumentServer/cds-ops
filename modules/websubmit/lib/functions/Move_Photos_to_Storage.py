@@ -1,5 +1,5 @@
 ## This file is part of Invenio.
-## Copyright (C) 2010, 2011, 2012 CERN.
+## Copyright (C) 2010, 2011, 2012, 2013, 2014 CERN.
 ##
 ## Invenio is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU General Public License as
@@ -24,20 +24,15 @@ Requirements:
  JQuery:
   - jquery.min.js
 
- JQuery UI:
-  - jquery-ui.min.js
-  - UI "base" theme:
-      - jquery.ui.slider.css
-      - jquery.ui.core.css
-      - jquery.ui.theme.css
-      - images
+ Plupload 1.5.8 (jQuery plugin)
 
- Uploadify 2.0.1 (JQuery plugin):
-  - jquery.uploadify.min.js
-  - sfwobject.js
-  - uploadify.css
-  - cancel.png
-  - uploadify.swf, uploadify.allglyphs.swf and uploadify.fla
+Note
+----
+Please download http://www.plupload.com/download
+to your /js folder. The stracture should be
+  - /js/plupload/plupload.full.js
+  - /js/plupload/jquery.plupload.queue/jquery.plupload.queue.js
+(or run $make install-plupload-plugin from the root folder of the Invenio sources)
 """
 
 import os
@@ -135,10 +130,10 @@ def Move_Photos_to_Storage(parameters, curdir, form, user_info=None):
             if photo_id not in photo_manager_delete_list:
                 filename = photo_manager_new_dict[photo_id]
                 filepath = os.path.join(curdir, 'files', str(user_info['uid']),
-                                        'NewFile', filename)
+                                        'file', filename)
                 icon_filename = os.path.splitext(filename)[0] + ".gif"
                 fileiconpath = os.path.join(curdir, 'icons', str(user_info['uid']),
-                                            'NewFile', icon_filename)
+                                            'file', icon_filename)
 
                 # Add the file
                 if os.path.exists(filepath):
@@ -160,7 +155,6 @@ def Move_Photos_to_Storage(parameters, curdir, form, user_info=None):
                             fileiconpath = os.path.join(icon_path, icon_name)
                         except InvenioWebSubmitIconCreatorError, e:
                             _do_log(curdir, "Icon could not be created to %s: %s" % (filepath, e))
-                            pass
                         if os.path.exists(fileiconpath):
                             try:
                                 if not has_added_default_icon_subformat_p:
@@ -229,7 +223,6 @@ def read_param_file(curdir, param, split_lines=False):
             fd.close()
     except Exception, e:
         _do_log(curdir, 'Could not read %s: %s' % (param, e))
-        pass
     return param_value
 
 def _do_log(log_dir, msg):
@@ -278,6 +271,8 @@ def create_photos_manager_interface(sysno, session_id, uid,
     """
     Creates and returns the HTML of the photos manager interface for
     submissions.
+    Some of the parameters have been deprecated, and are not used, but
+    were kept for maintaining backwards compatibility.
 
     @param sysno: current record id
     @param session_id: user session_id (as retrieved by get_session_id(...) )
@@ -286,15 +281,16 @@ def create_photos_manager_interface(sysno, session_id, uid,
     @param indir: submission "indir"
     @param curdir: submission "curdir"
     @param access: submission "access"
-    @param can_delete_photos: if users can delete photos
-    @param can_reorder_photos: if users can reorder photos
+    @param can_delete_photos (deprecated, not used): if users can delete photos
+    @param can_reorder_photos (deprecated, not used): if users can reorder photos
     @param can_upload_photos: if users can upload photos
-    @param editor_width: width (in pixels) of the editor
-    @param editor_height: height (in pixels) of the editor
-    @param initial_slider_value: initial value of the photo size slider
-    @param max_slider_value: max value of the photo size slider
-    @param min_slider_value: min value of the photo size slider
+    @param editor_width (deprecated, not used): width (in pixels) of the editor
+    @param editor_height (deprecated, not used): height (in pixels) of the editor
+    @param initial_slider_value (deprecated, not used): initial value of the photo size slider
+    @param max_slider_value (deprecated, not used): max value of the photo size slider
+    @param min_slider_value (deprecated, not used): min value of the photo size slider
     """
+
     out = ''
 
     PHOTO_MANAGER_ICONS = read_param_file(curdir, 'PHOTO_MANAGER_ICONS', split_lines=True)
@@ -306,7 +302,7 @@ def create_photos_manager_interface(sysno, session_id, uid,
     PHOTO_MANAGER_NEW = read_param_file(curdir, 'PHOTO_MANAGER_NEW', split_lines=True)
     photo_manager_new_dict = dict([value.split('/', 1) for value in PHOTO_MANAGER_NEW if '/' in value])
     photo_manager_descriptions_dict = {}
-
+    photo_manager_photo_fullnames = {}
     # Compile a regular expression that can match the "default" icon,
     # and not larger version.
     CFG_BIBDOCFILE_ICON_SUBFORMAT_RE_DEFAULT = re.compile(CFG_BIBDOCFILE_DEFAULT_ICON_SUBFORMAT + '\Z')
@@ -317,19 +313,19 @@ def create_photos_manager_interface(sysno, session_id, uid,
         bibarchive = BibRecDocs(sysno)
         for doc in bibarchive.list_bibdocs():
             if doc.get_icon() is not None:
-                original_url = doc.list_latest_files()[0].get_url()
                 doc_id = str(doc.get_id())
                 icon_url = doc.get_icon(subformat_re=CFG_BIBDOCFILE_ICON_SUBFORMAT_RE_DEFAULT).get_url() # Get "default" icon
                 description = ""
+                bibdoc_file = None
                 for bibdoc_file in doc.list_latest_files():
-                    #format = bibdoc_file.get_format().lstrip('.').upper()
-                    #url = bibdoc_file.get_url()
-                    #photo_files.append((format, url))
-                    if not description and bibdoc_file.get_comment():
+                    if bibdoc_file and bibdoc_file.get_comment() and not description:
                         description = escape(bibdoc_file.get_comment())
-                name = bibarchive.get_docname(doc.id)
                 photo_manager_descriptions_dict[doc_id] = description
                 photo_manager_icons_dict[doc_id] = icon_url
+                try:
+                    photo_manager_photo_fullnames[doc_id] = bibdoc_file.fullname
+                except:
+                    photo_manager_photo_fullnames[doc_id] = ""
                 photo_manager_order_list.append(doc_id) # FIXME: respect order
 
     # Prepare the list of photos to display.
@@ -337,199 +333,261 @@ def create_photos_manager_interface(sysno, session_id, uid,
     for doc_id in photo_manager_order_list:
         if not photo_manager_icons_dict.has_key(doc_id):
             continue
+
         icon_url = photo_manager_icons_dict[doc_id]
+        fullname = photo_manager_photo_fullnames[doc_id]
+
         if PHOTO_MANAGER_ORDER:
             # Get description from disk only if some changes have been done
-            description = escape(read_param_file(curdir, 'PHOTO_MANAGER_DESCRIPTION_' + doc_id))
+            description = escape(read_param_file(curdir,
+                                 'PHOTO_MANAGER_DESCRIPTION_' + doc_id))
         else:
             description = escape(photo_manager_descriptions_dict[doc_id])
+
         photos_img.append('''
-        <li id="%(doc_id)s" style="width:%(initial_slider_value)spx;">
-            <div class="imgBlock">
-                <div class="normalLineHeight" style="margin-left:auto;margin-right:auto;display:inline" >
-                    <img id="delete_%(doc_id)s" class="hidden" src="/img/cross_red.gif" alt="Delete" style="position:absolute;top:0;" onclick="delete_photo('%(doc_id)s');"/>
-                    <img src="%(icon_url)s" class="imgIcon"/>
-                 </div>
-                 <div class="normalLineHeight">
-                     <textarea style="width:95%%" id="PHOTO_MANAGER_DESCRIPTION_%(doc_id)s" name="PHOTO_MANAGER_DESCRIPTION_%(doc_id)s">%(description)s</textarea>
-                 </div>
+        <div class='previewer' id='%(doc_id)s'>
+            <div data-id='%(doc_id)s' data-file_id='%(doc_id)s' data-order='%(doc_id)s' class='thumbnail'>
+                <a href='javascript:void(0)'  class='remove_image' data-file='%(fullname)s' data-id='%(doc_id)s'>&cross;</a>
+                <div class='thumbnail-wrapper'>
+                <img class='imageIcon' src='%(icon_url)s' />
+                </div>
+                <div style='clear:both'></div>
+                <span class='filename'>%(fullname)s</span>
+                <textarea placeholder='Add a description' id='PHOTO_MANAGER_DESCRIPTION_%(doc_id)s' name='PHOTO_MANAGER_DESCRIPTION_%(doc_id)s'>%(description)s</textarea>
             </div>
-        </li>''' % \
-                  {'initial_slider_value': initial_slider_value,
-                   'doc_id': doc_id,
-                   'icon_url': icon_url,
-                   'description': description})
+        </div>''' % {
+                  'fullname': fullname,
+                  'doc_id': doc_id,
+                  'icon_url': icon_url,
+                  'description': description})
 
     out += '''
-    <link rel="stylesheet" href="%(CFG_SITE_URL)s/img/jquery-ui/themes/base/jquery.ui.slider.css" type="text/css" charset="utf-8"/>
-    <link rel="stylesheet" href="%(CFG_SITE_URL)s/img/jquery-ui/themes/base/jquery.ui.core.css" type="text/css" charset="utf-8"/>
-    <link rel="stylesheet" href="%(CFG_SITE_URL)s/img/jquery-ui/themes/base/jquery.ui.theme.css" type="text/css" charset="utf-8"/>
-    <style type="text/css">
-            #sortable { list-style-type: none; margin: 0; padding: 0; }
-            #sortable li { margin: auto 3px; padding: 1px; float: left; width: 180px; font-size:small; text-align: center; position: relative;}
-            #sortable .imgIcon {max-height:95%%;max-width:95%%;margin: 2px;max-height:130px;}
-            #sortable li div.imgBlock {vertical-align: middle; margin:
-    auto;display:inline;display:inline-table;display:inline-block;vertical-align:middle;text-align : center; width:100%%;position:relative}
-            #sortable li div.imgBlock .hidden {display:none;}
-            %(delete_hover_class)s
-            .fileUploadQueue{text-align:left; margin: 0 auto; width:300px;}
-            .normalLineHeight {line-height:normal}
-    </style>
-
-    <div id="uploadedFiles" style="%(hide_photo_viewer)sborder-left:1px solid #555; border-top:1px solid #555;border-right:1px solid #eee;border-bottom:1px solid #eee;overflow:auto;%(editor_height_style)s%(editor_width_style)sbackground-color:#eee;margin:3px;text-align:left;position:relative"><ul id="sortable">%(photos_img)s</ul></div>
-    <div id="grid_slider" style="%(hide_photo_viewer)swidth:300px;">
-      <div class='ui-slider-handle'></div>
-    </div>
-
-
-    <script type="text/javascript" src="%(CFG_SITE_URL)s/js/jquery.uploadify.min.js"></script>
-    <script type="text/javascript" src="%(CFG_SITE_URL)s/js/swfobject.js"></script>
-    <script type="text/javascript" src="%(CFG_SITE_URL)s/js/jquery-ui.min.js"></script>
-    <link rel="stylesheet" href="%(CFG_SITE_URL)s/img/uploadify.css" type="text/css" />
+    <!-- Required scripts -->
+    <script type="text/javascript" src="/js/plupload/plupload.full.js"></script>
+    <script type="text/javascript" src="/js/plupload/jquery.plupload.queue/jquery.plupload.queue.js"></script>
+    <!-- Required scripts -->
+    <!-- Required CSS -->
+    <link rel="stylesheet" href="/img/websubmit.css" type="text/css" />
+    <!-- Required CSS -->
 
     <script type="text/javascript">
 
     $(document).ready(function() {
+        var $images   = []
+          , $ids      = []
+          , $replaced = []
+          , $message = $('.uploader-alert');
 
         /* Uploading */
-            if (%(can_upload_photos)s) {
-            $('#uploadFile').uploadify({
-                    'uploader': '%(CFG_SITE_URL)s/img/uploadify.swf',
-                    'script':    '/submit/uploadfile',
-                    'cancelImg': '%(CFG_SITE_URL)s/img/cancel.png',
-                    'multi' :    true,
-                    'auto' :    true,
-                    'simUploadLimit': 2,
-                    'scriptData' : {'type': 'File', 'uid': %(uid)s, 'session_id': '%(session_id)s', 'indir': '%(indir)s', 'doctype': '%(doctype)s', 'access': '%(access)s'},
-                    'displayDate': 'percentage',
-                    'buttonText': 'Browse',
-                    'fileDataName': 'NewFile' /* be compatible with CKEditor */,
-                    'onSelectOnce': function(event, data) {
-
-                     },
-                    'onSelect': function(event, queueID, fileObj, response, data) {
-                           $('#loading').css("visibility","visible");
-                     },
-                    'onAllComplete' : function(event, queueID, fileObj, response, data) {
-                           $('#loading').css("visibility","hidden");
-                     },
-                    /*'onCheck': function(event, checkScript, fileQueue, folder, single) {
-
-                           return false;
-                     },*/
-                    'onComplete': function(event, queueID, fileObj, response, data) {
-                           $('#grid_slider').css("display","block");
-                           $('#uploadedFiles').css("display","block");
-                           var cur_width = $("#grid_slider").slider('option', 'value');
-                           var response_obj = parse_invenio_response(response);
-                           icon_url = '%(CFG_SITE_URL)s/img/file-icon-blank-96x128.gif'
-                           if ("NewFile" in response_obj) {
-                               filename = response_obj["NewFile"]["name"]
-                               if ('iconName' in response_obj["NewFile"]){
-                                   icon_name = response_obj["NewFile"]["iconName"]
-                                   icon_url = '%(CFG_SITE_URL)s/submit/getuploadedfile?indir=%(indir)s&doctype=%(doctype)s&access=%(access)s&key=NewFile&icon=1&filename=' + icon_name
-                               }
-                           } else {
-                               return true;
-                           }
-                           $('#sortable').append('<li id="'+ queueID +'" style="width:'+cur_width+'px;"><div class="imgBlock"><div class="normalLineHeight" style="margin-left:auto;margin-right:auto;display:inline" ><img id="delete_'+ queueID +'" class="hidden" src="/img/cross_red.gif" alt="Delete" style="position:absolute;top:0;" onclick="delete_photo(\\''+ queueID +'\\');"/><img src="'+ icon_url +'" class="imgIcon"/></div><div class="normalLineHeight"><textarea style="width:95%%" id="PHOTO_MANAGER_DESCRIPTION_'+ queueID +'" name="PHOTO_MANAGER_DESCRIPTION_'+ queueID +'"></textarea></div></div></li>');
-
-                           update_order_field();
-                           $('#photo_manager_icons').val($("#photo_manager_icons").val() + '\\n' + queueID + '/' + icon_url);
-                           $('#photo_manager_new').val($("#photo_manager_new").val() + '\\n' + queueID + '/' + filename);
-                           update_CSS();
-                           return true;
-                     }
-            });
-         }
-
-        /* Resizing */
-            $("#grid_slider").slider({
-                    value: %(initial_slider_value)s,
-                    max: %(max_slider_value)s,
-                    min: %(min_slider_value)s,
-                    slide: function(event, ui) {
-                         update_CSS();
-                    }
-            });
-
-            /* Update CSS to ensure that existing photos get nicely laid out*/
-            update_CSS();
-
-    });
-
-
-    /* Ordering */
-            $(function() {
-                    if (%(can_reorder_photos)s) {
-                        $("#sortable").sortable();
-                        $("#sortable").bind('sortupdate', function(event, ui) {
-                            update_order_field();
-                        });
-                    }
-            });
-
-            function delete_photo(docid){
-                if (confirm("Are you sure you want to delete the photo? (The file will be deleted after you apply all the modifications)")) {
-                    $("#" + docid).remove();
-                    $("#photo_manager_delete").val($("#photo_manager_delete").val() + '\\n' + docid);
-                    update_order_field();
+        if (%(can_upload_photos)s) {
+            var uploader = new  plupload.Uploader({
+                runtimes      : 'html5,html4',
+                drop_element  : 'drop-zone-label',
+                browse_button : 'drop-zone-label',
+                url           : '/submit/uploadfile',
+                filters :[
+                    {title : "Image files", extensions : "jpg,gif,png,jpeg,tiff,tif,eps"},
+                    {title : "Document files", extensions: "pdf,lpdf"}
+                ],
+                multipart_params : {
+                    'session_id' : '%(session_id)s',
+                    'indir'      : '%(indir)s',
+                    'doctype'    : '%(doctype)s',
+                    'access'     : '%(access)s',
+                    'replace'    : 'false'
                 }
+            });
+
+            /* Uploader Init */
+            uploader.bind('Init', function(up, params){
+                // If browser supports drag&drop
+                if(uploader.features.dragdrop){
+                    var target = document.getElementById('drop-zone-label');
+                    target.ondragover = function(event) {
+                        this.className = "dragover";
+                        event.dataTransfer.dropEffect = "copy";
+                    };
+                    target.ondragleave = function() {
+                        this.className = "dragleave";
+                    };
+                    target.ondrop = function() {
+                        var that = this;
+                        this.className = "dragdrop";
+                        setTimeout(function(){
+                            that.className = "";
+                        }, 1000)
+                    };
+                    target.ondragend = function(){
+                        this.className = "dragleave";
+                    };
+                }
+            });
+            uploader.init();
+            /* Files Added */
+            uploader.bind('FilesAdded', function(up, files){
+                var add = true;
+                var duplicates = [];
+                $.when($.each(files, function(i, file){
+                        add = ($.inArray(file.name, $images) == -1) ? true : false;
+                        if(add){
+                            $('#filelist').append('<div class="previewer" id="' + file.id + '"><div class="thumbnail">'+
+                                                  '<div class="progress"><img src="/img/ajax-loader.gif" /></div>'+
+                                                  '</div></div>');
+                        }else{
+                            // Remove it from queue
+                            duplicates.push(i);
+                        }
+                    })).done(function(){
+
+                        if(duplicates.length > 0){
+                            var message;
+                            if(duplicates.length == 1){
+                                message = "There is one duplicate ["+files[duplicates[0]].name+"]. \\n Press ok to replace it otherwise cancel to ignore it.";
+                            }else{
+                                message = "There are " + duplicates.length + " duplicate files. \\n Press ok to replace it otherwise cancel to ignore it.";
+                            }
+                            if(confirm(message)){
+                                for(var i=0; i<duplicates.length; i++){
+                                    $replaced[files[i].name] = {
+                                        'oldID' : $ids[files[i].name],
+                                        'newID' : ''
+                                    }
+                                    delete_image(files[i].name);
+                                }
+                            }else{
+                                for(var i=0; i<duplicates.length; i++){
+                                    uploader.removeFile(files[i]);
+                                }
+                            }
+                        }
+                        uploader.refresh();
+                        uploader.start();
+                        uploader.refresh();
+                    });
+            });
+            /* Upload Progress */
+            /*uploader.bind('UploadProgress', function(up, file){
+            });
+            */
+            /* Before the upload starts */
+            uploader.bind('BeforeUpload', function(up, file){
+            });
+            /* Error handler */
+            uploader.bind('Error', function(up, error){
+                var $div = $('<span/>', {
+                        class : 'uploader-alert-message',
+                        text  : error.file.name + ': ' + error.message,
+                    });
+                $message.append($div);
+                setTimeout(function(){
+                    $div.fadeOut().remove();
+                }, 5000);
+                // Just to make sure that elements are on dom
+                setTimeout(function(){
+                    uploader.removeFile(error.file.id);
+                    $('#'+error.file.id).remove();
+                }, 0);
+            });
+            /* On complete */
+            uploader.bind('FileUploaded', function(up, file, response){
+                var uploadedImage = $.parseJSON(response.response);
+                // build the icon_url
+                if(uploadedImage.file.iconName !== undefined){
+                    icon_name =  uploadedImage.file.iconName;
+                    icon_url  = build_icon_url(icon_name);
+                }else{
+                    icon_url = '%(CFG_SITE_URL)s/img/file-icon-blank-96x128.gif'
+                }
+                $images.push(file.name);
+                $ids[file.name] = file.id;
+                if ($replaced[file.name] !== undefined){
+                    $replaced[file.name].newID = file.id;
+                    format_picture($replaced[file.name].oldID, file);
+                }else{
+                    format_picture(file.id, file);
+                }
+                $('#photo_manager_icons').val($("#photo_manager_icons").val() + '\\n' + file.id + '/' + icon_url);
+                $('#photo_manager_new').val($("#photo_manager_new").val() + '\\n' + file.id + '/' + file.name);
+            });
+        }
+
+        function build_icon_url(icon_name){
+            return '%(CFG_SITE_URL)s/submit/getuploadedfile?indir=%(indir)s&doctype=%(doctype)s&access=%(access)s&key=file&icon=1&filename=' + icon_name
+        }
+        function delete_image(filename, docid){
+            var index = $.inArray(filename, $images);
+            if(index > -1){
+                var id = $ids[filename];
+                delete $images[index];
+                delete $ids[filename];
+                $("#photo_manager_delete").val($("#photo_manager_delete").val() + '\\n' + id);
+            }else if(docid){
+                $("#photo_manager_delete").val($("#photo_manager_delete").val() + '\\n' + docid);
             }
+        }
 
-    /* CSS-related */
-
-            function update_CSS(){
-                /* Update some style according to the slider size */
-                var slider_value = $("#grid_slider").slider('option', 'value');
-                $('#uploadedFiles li').css('width', slider_value+"px");
-                /*$('#uploadedFiles div.floater').css('width', slider_value+"px");*/
-                /* Update height attr accordingly so that image get centered.
-                   First we need to get the tallest element of the list.
-                 */
-                var max_height = 0;
-                $('#uploadedFiles li div').each(function() {
-                    this_height = $(this).height();
-                    if(this_height > max_height) {
-                        max_height = this_height;
-                    }
-                });
-                $('#uploadedFiles li').css('height',max_height+"px");
-                $('#uploadedFiles li').css('line-height',max_height+"px");
+        function format_picture(id, file){
+            $('#'+id).html("<div data-id='"+file.id+"' data-file_id='"+file.id+"' data-order='"+file.id+"' class='thumbnail'>" +
+                           "<a href='javascript:void(0)'  class='remove_image' data-file='"+file.name+"' data-id='"+file.id+"'><img src='/img/wb-delete-basket.png'/></a>"+
+                           "<div class='thumbnail-wrapper'>"+
+                           "<img class='imageIcon' src='"+icon_url+"' />"+
+                           "</div>"+
+                           "<div style='clear:both'></div>"+
+                           "<span class='filename'>"+file.name+"</span>"+
+                           "<textarea placeholder='Add a description' id='PHOTO_MANAGER_DESCRIPTION_"+ file.id +"' name='PHOTO_MANAGER_DESCRIPTION_"+ file.id +"'></textarea>" +
+                           "</div>");
+        }
+        var onclick = $('[type=button]').attr('onclick');
+        $('[type=button]').attr('onclick', '');
+        $('[type=button]').click(function(e){
+            var $that = $(this);
+            $that.attr('disabled', true);
+            $that.parent().append('<p class="loading">Submiting please wait...</p>');
+            e.stopPropagation();
+            var theids = [];
+            $.when($.each($images, function(index, filename){
+                theids.push($ids[filename]);
+            })).done(function(){
+                $('#photo_manager_order').val(theids.join('\\n'));
+                // Really dirty
+                // FIXME: Remove this ungly eval
+               var re =  eval(onclick);
+               if(re !== undefined){
+                $that.attr('disabled', false);
+                $that.parent().find('.loading').remove();
+               }
+            })
+        });
+        // Bind click for deletion
+        $(document).on('click','.remove_image',function(){
+            var docid = $(this).data('id');
+            var filename = $(this).data('file');
+            if (confirm("Are you sure you want to delete the photo? (The file will be deleted after you apply all the modifications)")) {
+                    delete_image(filename, docid);
+                    $("[data-id="+docid+"]").parent().remove();
             }
-
-    /* Utils */
-             function update_order_field(){
-                 $("#photo_manager_order").val($("#sortable").sortable('toArray').join('\\n'));
-             }
-
-             function parse_invenio_response(response){
-                 /* Return the javascript object included in the
-                    the given Invenio message. Really dirty implementation, but ok
-                    in this very simple scenario */
-                 /*var object_string = response.substring(response.indexOf('<![CDATA[')+9, response.lastIndexOf(']]>'));*/ object_string = response;
-                 var object = {};
-                 eval('object=' + object_string);
-                 return object;
-              }
-
+        });
+    });
     </script>
 
-
-    <div style="margin: 0 auto;">
-    <img src="%(CFG_SITE_URL)s/img/loading.gif" style="visibility: hidden" id="loading"/>
-    <input type="file" size="40" id="uploadFile" name="PHOTO_FILE" style="margin: 0 auto;%(upload_display)s"/>
+    <div id="calluploader" class="uploadedImages">
+        <div id="dropzone">
+            <div id="dropzone-container">
+                <div id="drop-zone-label">
+                    <h2>Drop your images or click to select.</h2>
+                </div>
+                <div id="filelist">%(photos_img)s</div>
+            </div>
+        </div>
     </div>
-
-    <!--<a href="javascript:$('#uploadFile').fileUploadStart();">Upload Files</a> -->
 
     <textarea id="photo_manager_icons" style="display:none" name="PHOTO_MANAGER_ICONS">%(PHOTO_MANAGER_ICONS)s</textarea>
     <textarea id="photo_manager_order" style="display:none" name="PHOTO_MANAGER_ORDER">%(PHOTO_MANAGER_ORDER)s</textarea>
     <textarea id="photo_manager_new" style="display:none" name="PHOTO_MANAGER_NEW">%(PHOTO_MANAGER_NEW)s</textarea>
     <textarea id="photo_manager_delete" style="display:none" name="PHOTO_MANAGER_DELETE">%(PHOTO_MANAGER_DELETE)s</textarea>
+
+    <div style="clear:both;"></div>
     ''' % {'CFG_SITE_URL': CFG_SITE_URL,
-           #'curdir': cgi.escape(quote(curdir, safe="")),#quote(curdir, safe=""),
-           'uid': uid,
            'access': quote(access, safe=""),
            'doctype': quote(doctype, safe=""),
            'indir': quote(indir, safe=""),
@@ -538,16 +596,8 @@ def create_photos_manager_interface(sysno, session_id, uid,
            'PHOTO_MANAGER_ORDER': '\n'.join(photo_manager_order_list),
            'PHOTO_MANAGER_DELETE': '\n'.join(photo_manager_delete_list),
            'PHOTO_MANAGER_NEW': '\n'.join([key + '/' + value for key, value in photo_manager_new_dict.iteritems()]),
-           'initial_slider_value': initial_slider_value,
-           'max_slider_value': max_slider_value,
-           'min_slider_value': min_slider_value,
            'photos_img': '\n'.join(photos_img),
-           'hide_photo_viewer': (len(photos_img) == 0 and len(photo_manager_new_dict.keys()) == 0) and 'display:none;' or '',
-           'delete_hover_class': can_delete_photos and "#sortable li div.imgBlock:hover .hidden {display:inline;}" or '',
-           'can_reorder_photos': can_reorder_photos and 'true' or 'false',
            'can_upload_photos': can_upload_photos and 'true' or 'false',
-           'upload_display': not can_upload_photos and 'display: none' or '',
-           'editor_width_style': editor_width and 'width:%spx;' % editor_width or '',
-           'editor_height_style': editor_height and 'height:%spx;' % editor_height or ''}
+           }
 
     return out

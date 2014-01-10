@@ -1,0 +1,148 @@
+/*
+ * This file is part of Invenio.
+ * Copyright (C) 2014 CERN.
+ *
+ * Invenio is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * Invenio is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Invenio; if not, write to the Free Software Foundation, Inc.,
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+ */
+
+.thumbnail{
+    position: relative;
+    border: none;
+    float: left;
+    margin: 0 5px 10px 5px;
+    width: 282px;
+    box-shadow: none;
+    min-height: 250px;
+    border-radius: 0;
+    padding: 0;
+    background-color: #e5e5e5;
+    border: 1px solid #ccc;
+}
+.thumbnail textarea{
+    width: 263px!important;
+    border-radius: 0;
+    margin: 0 auto;
+    display: inherit;
+    padding: 5px;
+    overflow: auto;
+    font-size: 12px;
+    border: 1px solid #ccc!important;
+}
+.progress img{
+    position: absolute;
+    width: 220px!important;
+    height: 16px!important;
+    top: 0!important;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-bottom: none!important;
+    margin: 20px auto;
+}
+.preview-form{
+    margin: 0px 0;
+}
+.checkbox{
+    margin: 0;
+    font-size: 12px;
+}
+.thumbnail-wrapper img{
+   max-height: 180px;
+   max-width: 282px;
+   position: absolute;
+   left: 0;
+   right: 0;
+   top: 0;
+   bottom: 0;
+   margin: auto;
+}
+.thumbnail-wrapper {
+    background: #222;
+    position: relative;
+    box-shadow: inset 0px 1px 1px #000;
+    margin-bottom: 5px;
+    width: 282px;
+    height: 180px;
+}
+#drop-zone-label{
+    padding: 50px 20px;
+    margin: 20px 8px;
+    cursor: pointer;
+    border: 3px dashed #ccc;
+}
+#drop-zone-label:hover {
+    border: 3px dashed #ddd;
+}
+#drop-zone-label.dragover{
+    background:red;
+}
+#drop-zone-label:hover h2, #drop-zone-label:hover  small{
+    color: #666;
+}
+#drop-zone-label h2, #drop-zone-label small{
+    margin: 0;
+    color: #999;
+    font-size: 20px;
+    text-align: center;
+    line-height: normal;
+}
+a.remove_image{
+    color: #f96464;
+    font-size: 30px;
+    position: absolute;
+    right: 5px;
+    font-weight: normal;
+    text-decoration: none;
+    display: none;
+    top: 2px;
+    z-index: 9999;
+}
+a.remove_image:hover {
+    color: #bc1313;
+    text-decoration: none!important;
+}
+.thumbnail:hover a.remove_image{
+    display: inline;
+}
+.submission-error{
+    position: relative;
+    border: none;
+    float: left;
+    margin-right: 5px;
+    margin-left: 5px;
+    margin-bottom: 10px;
+    width: 275px;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 5px;
+    color: #fff;
+    font-size:10px;
+    background-color: #e74c3c;
+}
+.uploadedImages{
+    max-width:890px;
+    margin: 0 auto;
+}
+.filename{
+    position: absolute;
+    top: 0;
+    text-align: left;
+    left: 0px;
+    background: rgba(0,0,0,0.3);
+    width:272px;
+    padding: 3px 5px;
+    color: #fff;
+    font-size: 12px;
+}

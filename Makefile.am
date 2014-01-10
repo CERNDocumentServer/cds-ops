@@ -313,6 +313,35 @@ uninstall-pdfa-helper-files:
 	@echo "** The PDF/A helper files were successfully uninstalled. **"
 	@echo "***********************************************************"
 
+install-plupload-plugin:
+	@echo "**********************************************************"
+	@echo "**      Installing Uploader and other plugins           **"
+	@echo "**********************************************************"
+	mkdir -p /tmp/invenio_js_frameworks
+	(cd /tmp/invenio_js_frameworks && \
+	wget http://github.com/moxiecode/plupload/archive/v1.5.8.zip && \
+	unzip v1.5.8.zip && \
+	mkdir -p ${prefix}/var/www/js/plupload && \
+ 	cp -r plupload-1.5.8/js/* ${prefix}/var/www/js/plupload/ && \
+	cd /tmp && \
+	rm -rf invenio_js_frameworks)
+
+	@echo "***********************************************************"
+	@echo "**         Uploader was successfully installed           **"
+	@echo "***********************************************************"
+
+
+uninstall-plupload-plugin:
+	@echo "***********************************************************"
+	@echo "**       	  Unistalling Uploader                      **"
+	@echo "***********************************************************"
+	rm -rf /tmp/invenio_js_frameworks
+	rm -rf ${prefix}/var/www/js/plupload
+	@echo "***********************************************************"
+	@echo "**         Uploader was successfully unistalled          **"
+	@echo "***********************************************************"
+
+
 #Solrutils allows automatic installation, running and searching of an external Solr index.
 install-solrutils:
 	@echo "***********************************************************"

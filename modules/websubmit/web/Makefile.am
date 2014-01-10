@@ -24,6 +24,10 @@ doc_DATA = approve.py \
            yourapprovals.py \
            yoursubmissions.py
 
+webdir = $(localstatedir)/www/img
+
+web_DATA = websubmit.css
+
 testdir = $(libdir)/webtest/invenio
 
 test_DATA = test.pdf \
@@ -37,6 +41,6 @@ test_DATA = test.pdf \
             icon-test.gif \
             test.tar.gz
 
-EXTRA_DIST = $(doc_DATA) $(test_DATA)
+EXTRA_DIST = $(doc_DATA) $(test_DATA) $(web_DATA)
 
 CLEANFILES = *~ *.tmp *.pyc

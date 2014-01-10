@@ -1,5 +1,5 @@
 ## This file is part of Invenio.
-## Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 CERN.
+## Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014 CERN.
 ##
 ## Invenio is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU General Public License as
@@ -91,6 +91,7 @@ class WebInterfaceSubmitPages(WebInterfaceDirectory):
             'indir': (str, ''),
             'session_id': (str, ''),
             'rename': (str, ''),
+            'replace': (str, '')
             })
 
         curdir = None
@@ -105,29 +106,14 @@ class WebInterfaceSubmitPages(WebInterfaceDirectory):
                                   argd['access'])
 
         user_info = collect_user_info(req)
-        if form.has_key("session_id"):
-            # Are we uploading using Flash, which does not transmit
-            # cookie? The expect to receive session_id as a form
-            # parameter.  First check that IP addresses do not
-            # mismatch. A ValueError will be raises if there is
-            # something wrong
-            session = get_session(req=req, sid=argd['session_id'])
-            try:
-                session = get_session(req=req, sid=argd['session_id'])
-            except ValueError, e:
-                raise apache.SERVER_RETURN(apache.HTTP_BAD_REQUEST)
+        uid = user_info['uid']
 
-            # Retrieve user information. We cannot rely on the session here.
-            res = run_sql("SELECT uid FROM session WHERE session_key=%s", (argd['session_id'],))
-            if len(res):
-                uid = res[0][0]
-                user_info = collect_user_info(uid)
-                try:
-                    act_fd = file(os.path.join(curdir, 'act'))
-                    action = act_fd.read()
-                    act_fd.close()
-                except:
-                    action = ""
+        try:
+            act_fd = file(os.path.join(curdir, 'act'))
+            action = act_fd.read()
+            act_fd.close()
+        except:
+            action = ""
 
         # Is user authorized to perform this action?
         (auth_code, auth_message) = acc_authorize_action(uid, "submit",
@@ -174,11 +160,13 @@ class WebInterfaceSubmitPages(WebInterfaceDirectory):
                     if filename != "":
                         # Check that file does not already exist
                         n = 1
-                        while os.path.exists(os.path.join(dir_to_open, filename)):
-                            #dirname, basename, extension = decompose_file(new_destination_path)
-                            basedir, name, extension = decompose_file(filename)
-                            new_name = propose_next_docname(name)
-                            filename = new_name + extension
+                        if not argd.get('replace'):
+                            while os.path.exists(os.path.join(dir_to_open, filename)):
+                                #dirname, basename, extension = decompose_file(new_destination_path)
+                                basedir, name, extension = decompose_file(filename)
+                                new_name = propose_next_docname(name)
+                                filename = new_name + extension
+
                         # This may be dangerous if the file size is bigger than the available memory
                         fp = open(os.path.join(dir_to_open, filename), "w")
                         fp.write(formfields.file.read())
@@ -709,7 +697,7 @@ class WebInterfaceSubmitPages(WebInterfaceDirectory):
 
         uid = getUid(req)
 
-        if CFG_ACCESS_CONTROL_LEVEL_SITE >= 1:
+        if uid == -1 or CFG_ACCESS_CONTROL_LEVEL_SITE >= 1:
             return page_not_authorized(req, "direct",
                                        navmenuid='submit',
                                        text=_("Submissions are not available"))
