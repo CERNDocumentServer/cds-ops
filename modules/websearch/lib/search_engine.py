@@ -5343,7 +5343,7 @@ def call_bibformat(recID, format="HD", ln=CFG_SITE_LANG, search_pattern=None, us
     if search_pattern is not None:
         for unit in create_basic_search_units(None, str(search_pattern), None):
             bsu_o, bsu_p, bsu_f, bsu_m = unit[0], unit[1], unit[2], unit[3]
-            if (bsu_o != '-' and bsu_f in [None, 'fulltext']):
+            if (bsu_o != '-' and bsu_f == 'fulltext'):
                 if bsu_m == 'a' and bsu_p.startswith('%') and bsu_p.endswith('%'):
                     # remove leading and training `%' representing partial phrase search
                     keywords.append(bsu_p[1:-1])
