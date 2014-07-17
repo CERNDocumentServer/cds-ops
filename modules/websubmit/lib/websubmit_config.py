@@ -19,7 +19,6 @@
 
 __revision__ = "$Id$"
 
-import re
 
 ## test:
 test = "FALSE"
@@ -53,6 +52,12 @@ CFG_RESERVED_SUBMISSION_FILENAMES = ['SuE',
 
 ## Prefix for video uploads, Garbage Collector
 CFG_WEBSUBMIT_TMP_VIDEO_PREFIX = "video_upload_"
+
+# Which preview size to display for cropping
+# `master` for the master version
+# CFG_WEBSUBMIT_CROP_PREVIEW_SIZE = "master"
+CFG_WEBSUBMIT_CROP_PREVIEW_SIZE = "icon-1440"
+
 
 class InvenioWebSubmitFunctionError(Exception):
     """This exception should only ever be raised by WebSubmit functions.
@@ -167,6 +172,28 @@ class InvenioWebSubmitFileStamperError(Exception):
 
 
 class InvenioWebSubmitIconCreatorError(Exception):
+    """This exception should be raised by websubmit_icon_creator when an
+       error is encoutered that prevents an icon from being created.
+       When caught, this exception should be used to stop processing with a
+       failure signal.
+
+       Extends: Exception.
+    """
+    def __init__(self, value):
+        """Set the internal "value" attribute to that of the passed "value"
+           parameter.
+           @param value: (string) - a string to write to the log.
+        """
+        Exception.__init__(self)
+        self.value = value
+    def __str__(self):
+        """Return oneself as a string (actually, return the contents of
+           self.value).
+           @return: (string)
+        """
+        return str(self.value)
+
+class InvenioWebSubmitCropCreatorError(Exception):
     """This exception should be raised by websubmit_icon_creator when an
        error is encoutered that prevents an icon from being created.
        When caught, this exception should be used to stop processing with a

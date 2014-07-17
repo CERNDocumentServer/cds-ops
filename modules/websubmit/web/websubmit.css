@@ -18,131 +18,246 @@
  */
 
 .thumbnail{
-    position: relative;
-    border: none;
-    float: left;
-    margin: 0 5px 10px 5px;
-    width: 282px;
-    box-shadow: none;
-    min-height: 250px;
-    border-radius: 0;
-    padding: 0;
-    background-color: #e5e5e5;
-    border: 1px solid #ccc;
+  position: relative;
+  border: none;
+  float: left;
+  margin: 0 5px 10px 5px;
+  width: 282px;
+  box-shadow: none;
+  min-height: 270px;
+  border-radius: 0;
+  padding: 0;
+  background-color: #e5e5e5;
+  border: 1px solid #ccc;
 }
 .thumbnail textarea{
-    width: 263px!important;
-    border-radius: 0;
-    margin: 0 auto;
-    display: inherit;
-    padding: 5px;
-    overflow: auto;
-    font-size: 12px;
-    border: 1px solid #ccc!important;
+  width: 263px!important;
+  border-radius: 0;
+  margin: 0 auto;
+  display: inherit;
+  padding: 5px;
+  overflow: auto;
+  font-size: 12px;
+  border: 1px solid #ccc!important;
+}
+.thumbnail a{
+  text-align: center;
+  padding: 5px 0;
+  font-size: 13px;
+  display: block;
 }
 .progress img{
-    position: absolute;
-    width: 220px!important;
-    height: 16px!important;
-    top: 0!important;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    border-bottom: none!important;
-    margin: 20px auto;
+  position: absolute;
+  width: 220px!important;
+  height: 16px!important;
+  top: 0!important;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-bottom: none!important;
+  margin: 20px auto;
 }
 .preview-form{
-    margin: 0px 0;
+  margin: 0px 0;
 }
 .checkbox{
-    margin: 0;
-    font-size: 12px;
+  margin: 0;
+  font-size: 12px;
 }
 .thumbnail-wrapper img{
-   max-height: 180px;
-   max-width: 282px;
-   position: absolute;
-   left: 0;
-   right: 0;
-   top: 0;
-   bottom: 0;
-   margin: auto;
+  max-height: 180px;
+  max-width: 282px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  margin: auto;
 }
 .thumbnail-wrapper {
-    background: #222;
-    position: relative;
-    box-shadow: inset 0px 1px 1px #000;
-    margin-bottom: 5px;
-    width: 282px;
-    height: 180px;
+  background: #222;
+  position: relative;
+  box-shadow: inset 0px 1px 1px #000;
+  margin-bottom: 5px;
+  width: 282px;
+  height: 180px;
 }
 #drop-zone-label{
-    padding: 50px 20px;
-    margin: 20px 8px;
-    cursor: pointer;
-    border: 3px dashed #ccc;
+  padding: 50px 20px;
+  margin: 20px 8px;
+  cursor: pointer;
+  border: 3px dashed #ccc;
 }
 #drop-zone-label:hover {
-    border: 3px dashed #ddd;
+  border: 3px dashed #ddd;
 }
 #drop-zone-label.dragover{
-    background:red;
+  border: 3px dashed #555;
+}
+#drop-zone-label.dragover h2{
+  color: #555;
+}
+#drop-zone-label.dragleave{
+  border: 3px dashed #ccc;
+}
+#drop-zone-label.dragdrop{
+  border: 3px dashed green;
+}
+#drop-zone-label.dragdrop h2{
+  color: green;
 }
 #drop-zone-label:hover h2, #drop-zone-label:hover  small{
-    color: #666;
+  color: #666;
 }
 #drop-zone-label h2, #drop-zone-label small{
-    margin: 0;
-    color: #999;
-    font-size: 20px;
-    text-align: center;
-    line-height: normal;
+  margin: 0;
+  color: #999;
+  font-size: 20px;
+  text-align: center;
+  line-height: normal;
 }
 a.remove_image{
-    color: #f96464;
-    font-size: 30px;
-    position: absolute;
-    right: 5px;
-    font-weight: normal;
-    text-decoration: none;
-    display: none;
-    top: 2px;
-    z-index: 9999;
+  color: #f96464;
+  font-size: 30px;
+  position: absolute;
+  right: 5px;
+  font-weight: normal;
+  text-decoration: none;
+  display: none;
+  top: 2px;
+  z-index: 9999;
 }
 a.remove_image:hover {
-    color: #bc1313;
-    text-decoration: none!important;
+  color: #bc1313;
+  text-decoration: none!important;
 }
 .thumbnail:hover a.remove_image{
-    display: inline;
+  display: inline;
+  text-decoration: none!important;
+}
+.thumbnail:hover a.remove_image img{
+  width: 20px;
+  height: 20px;
 }
 .submission-error{
-    position: relative;
-    border: none;
-    float: left;
-    margin-right: 5px;
-    margin-left: 5px;
-    margin-bottom: 10px;
-    width: 275px;
-    box-shadow: none;
-    border-radius: 0;
-    padding: 5px;
-    color: #fff;
-    font-size:10px;
-    background-color: #e74c3c;
+  position: relative;
+  border: none;
+  float: left;
+  margin-right: 5px;
+  margin-left: 5px;
+  margin-bottom: 10px;
+  width: 275px;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 5px;
+  color: #fff;
+  font-size:10px;
+  background-color: #e74c3c;
 }
 .uploadedImages{
-    max-width:890px;
-    margin: 0 auto;
+  max-width:890px;
+  margin: 0 auto;
 }
 .filename{
-    position: absolute;
-    top: 0;
-    text-align: left;
-    left: 0px;
-    background: rgba(0,0,0,0.3);
-    width:272px;
-    padding: 3px 5px;
-    color: #fff;
-    font-size: 12px;
+  position: absolute;
+  top: 0;
+  text-align: left;
+  left: 0px;
+  background: rgba(0,0,0,0.3);
+  width:272px;
+  padding: 3px 5px;
+  color: #fff;
+  font-size: 12px;
+}
+/* Error Messages */
+.uploader-alert-message {
+  display: block;
+  color: red;
+}
+/* Cropping */
+div.cropImgWrapper {
+  z-index: 999999999999999!important;
+  margin: 0 80px!important;
+  position: relative;
+  box-shadow: none!important;
+  border: none!important;
+}
+
+#make-image{
+  position: relative;
+  width:400px;
+  height: 180px;
+  padding: 20px 0;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+.crop-actions{
+  margin-top: 10px;
+  padding-top: 15px;
+  border-top: 1px solid #f6f6f6;
+  text-align: right;
+}
+.crop-actions a{
+  border: 1px solid;
+  text-align: center;
+  padding: 5px 10px;
+  border-radius: 3px;
+  margin-left: 5px;
+}
+.crop-actions .crop-save{
+  background: #6fb64e;
+  border-color: #62ac3b;
+  color: #fff;
+}
+.crop-actions .crop-save:hover{
+  background: #47a447;
+  border-color: #62ac3b;
+  color: #fff;
+}
+.crop-actions .crop-save.disabled{
+  background: #47a447;
+  border-color: #62ac3b;
+  color: #fff;
+  cursor: not-allowed;
+}
+.crop-actions .crop-cancel{
+  background: #f8f8f8;
+  color: #333;
+  border-color: #ccc;
+}
+.crop-actions .crop-cancel:hover{
+  background: #ebebeb;
+  color: #333;
+  border-color: #ccc;
+}
+.crop-actions a:hover{
+  text-decoration: none;
+}
+.crop-ctr{
+  text-align: center;
+}
+.crop-ctr a{
+  margin-right: 10px;
+  font-size: 12px;
+}
+.crop-loading-message{
+  display: block;
+  text-align: center;
+}
+.crop-tool-links{
+  text-align: right;
+}
+.crop-tool-links a{
+  margin: 0 5px;
+}
+.crop-tool-links a[rel=save]{
+  color: #fff;
+  background-color: #7d9ffa;
+}
+.crop-tool-links a[rel=save]:hover{
+  text-decoration: none;
+  background-color: #2860f7;
+}
+.white-popup-big{
+  z-index: 999;
 }

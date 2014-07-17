@@ -342,6 +342,43 @@ uninstall-plupload-plugin:
 	@echo "***********************************************************"
 
 
+install-crop-plugin:
+	@echo "**********************************************************"
+	@echo "**      Installing Uploader and other plugins           **"
+	@echo "**********************************************************"
+	rm -rf /tmp/invenio_js_frameworks
+	mkdir -p /tmp/invenio_js_frameworks
+	(cd /tmp/invenio_js_frameworks && \
+	wget https://github.com/dimsemenov/Magnific-Popup/archive/master.zip && \
+	unzip master.zip && \
+	mkdir -p ${prefix}/var/www/static/magnific_popup && \
+	cp -r Magnific-Popup-master/dist/* ${prefix}/var/www/static/magnific_popup && \
+	wget https://github.com/tapmodo/Jcrop/zipball/v0.9.12 && \
+	unzip v0.9.12 && \
+	mkdir -p ${prefix}/var/www/static/crop && \
+	cp -r tapmodo-Jcrop-1902fbc/js/* ${prefix}/var/www/static/crop && \
+	cp -r tapmodo-Jcrop-1902fbc/css/* ${prefix}/var/www/static/crop && \
+	wget -O json.zip https://github.com/douglascrockford/JSON-js/archive/master.zip && \
+	unzip json.zip && \
+	cp  JSON-js-master/json2.js ${prefix}/var/www/js && \
+	cd /tmp && \
+	rm -rf invenio_js_frameworks)
+
+	@echo "***********************************************************"
+	@echo "**         Uploader was successfully installed           **"
+	@echo "***********************************************************"
+
+uninstall-crop-plugin:
+	@echo "***********************************************************"
+	@echo "**       	  Unistalling Uploader                      **"
+	@echo "***********************************************************"
+	rm -rf /tmp/invenio_js_frameworks
+	rm -rf ${prefix}/var/www/static/magnific_popup
+	rm -rf ${prefix}/var/www/static/crop
+	@echo "***********************************************************"
+	@echo "**         Uploader was successfully unistalled          **"
+	@echo "***********************************************************"
+
 #Solrutils allows automatic installation, running and searching of an external Solr index.
 install-solrutils:
 	@echo "***********************************************************"

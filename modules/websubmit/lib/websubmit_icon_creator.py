@@ -49,7 +49,8 @@ from invenio.config import \
      CFG_PATH_PDFTK, \
      CFG_PATH_CONVERT
 from invenio.shellutils import escape_shell_arg
-from invenio.websubmit_config import InvenioWebSubmitIconCreatorError
+from invenio.websubmit_config import InvenioWebSubmitIconCreatorError, \
+                                     InvenioWebSubmitCropCreatorError
 
 CFG_ALLOWED_FILE_EXTENSIONS = ["pdf", "gif", "jpg", \
                                "jpeg", "ps", "png", "bmp", \
@@ -495,7 +496,106 @@ def create_icon(options):
     ## icon file to the caller:
     return (path_workingdir, icon_name)
 
+## ***** Functions Specific to crop images: *****
 
+def make_crop(path_workingdir, \
+              filename, \
+              filetype, \
+              width, \
+              height, \
+              pos_x, \
+              pos_y):
+    """ Makes the crop """
+    # Create the crop_name
+    crop_name = "crop-%s" % filename
+    if len(crop_name.split(".")) > 1:
+        ## The icon file name has an extension - strip it and add the icon
+        ## file type extension:
+        raw_name = crop_name[:crop_name.rfind(".")]
+        if raw_name != "":
+            crop_name = "%s.%s" % (raw_name, filetype)
+        else:
+            ## It would appear that the file had no extension and that its
+            ## name started with a period. Just use the original name with
+            ## the icon file type's suffix:
+            crop_name = "%s.%s" % (crop_name, filetype)
+
+    # Make the command
+    cmd = "%(convert)s %(file-path)s -crop %(width)sx%(height)s+%(pos_x)s+%(pos_y)s %(crop-path)s 2>/dev/null" % \
+            {
+                'convert' : CFG_PATH_CONVERT,
+                'width'   : width,
+                'height'  : height,
+                'pos_x'   : pos_x,
+                'pos_y'   : pos_y,
+                'file-path' : escape_shell_arg("%s/%s" \
+                                                     % (path_workingdir, \
+                                                        filename)),
+                'crop-path' : escape_shell_arg("%s/%s" \
+                                                    % (path_workingdir, \
+                                                       crop_name)),
+            }
+    errcode_create_crop = os.system(cmd)
+
+    # Check if the crop was successful
+    if errcode_create_crop or \
+            not os.access("%s/%s" %(path_workingdir, crop_name), os.F_OK):
+        msg = "Error: Unable to create and crop for file [%s/%s] (error " \
+              "code [%s].)" \
+              %(path_workingdir, filename, errcode_create_crop)
+        raise InvenioWebSubmitCropCreatorError(msg)
+
+    # The crop was successfully created. Return the name
+    return crop_name
+
+def create_crop(input_file, width, height, pos_x=0, pos_y=0):
+    """ Creates the crop """
+
+    # Check width
+    if width in (None, 0, ""):
+        msg = "Error width must be greater than 0"
+        raise InvenioWebSubmitCropCreatorError(msg)
+    # Check height
+    if height in (None, 0, ""):
+        msg = "Error height must be greater than 0"
+        raise InvenioWebSubmitCropCreatorError(msg)
+    # Check filename
+    if input_file in (None, ""):
+        msg = "Error input_file couldn't be empty"
+        raise InvenioWebSubmitCropCreatorError(msg)
+
+    # Lets find the extension
+    tmp_file_extension = input_file.split('.')[-1].split(';')[0]
+    if tmp_file_extension.lower() not in CFG_ALLOWED_FILE_EXTENSIONS:
+        # Sorry we not support this extension raise an error
+        msg = "Error: icons can be only be created from %s files, " \
+                  "not [%s]." % (str(CFG_ALLOWED_FILE_EXTENSIONS), \
+                                 tmp_file_extension.lower())
+        raise InvenioWebSubmitCropCreatorError(msg)
+    else:
+        filetype = tmp_file_extension.lower()
+
+    # Brilliant just create a working directory and copy the input-file
+    # there
+    path_workingdir = create_working_directory()
+    try:
+        base_source_file = \
+                copy_file_to_directory(input_file, path_workingdir)
+    except IOError, err:
+        msg = "Crop creation failed: unable to copy the source image file " \
+              "to the working directory. Got this error: [%s]" % str(err)
+        raise InvenioWebSubmitCropCreatorError(msg)
+
+    # Make the crop and get the crop-name
+    crop_name = make_crop(path_workingdir, \
+                          base_source_file, \
+                          filetype, \
+                          width, \
+                          height, \
+                          pos_x, \
+                          pos_y)
+
+    return (path_workingdir, crop_name)
 
 ## ***** Functions Specific to CLI calling of the program: *****
 

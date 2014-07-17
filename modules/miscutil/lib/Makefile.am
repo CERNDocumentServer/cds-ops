@@ -101,7 +101,8 @@ pylib_DATA = __init__.py \
              hepdatadisplayutils.py \
              hepdatautils_unit_tests.py \
              filedownloadutils.py \
-             filedownloadutils_unit_tests.py
+             filedownloadutils_unit_tests.py \
+             get_image_size.py
 
 jsdir=$(localstatedir)/www/js
 

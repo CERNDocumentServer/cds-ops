@@ -44,8 +44,15 @@ from cgi import escape
 from invenio.bibdocfile import BibRecDocs, InvenioBibDocFileError
 from invenio.config import CFG_BINDIR, CFG_SITE_URL
 from invenio.dbquery import run_sql
-from invenio.websubmit_icon_creator import create_icon, InvenioWebSubmitIconCreatorError
+from invenio.websubmit_icon_creator import create_icon, \
+                                           create_crop, \
+                                           InvenioWebSubmitIconCreatorError, \
+                                           InvenioWebSubmitCropCreatorError
+
+from invenio.bibdocfile import decompose_file
 from invenio.bibdocfile_config import CFG_BIBDOCFILE_DEFAULT_ICON_SUBFORMAT
+from invenio.websubmit_config import CFG_WEBSUBMIT_CROP_PREVIEW_SIZE
+
 
 def Move_Photos_to_Storage(parameters, curdir, form, user_info=None):
     """
@@ -119,7 +126,14 @@ def Move_Photos_to_Storage(parameters, curdir, form, user_info=None):
                                for value in PHOTO_MANAGER_NEW \
                                if '/' in value])
 
-    ## Create an instance of BibRecDocs for the current recid(sysno)
+    PHOTO_MANAGER_CROP = read_param_file(curdir,
+                                         'PHOTO_MANAGER_CROPPING',
+                                         split_lines=True)
+    photo_manager_crop_dict = dict([value.split('/', 1)
+                                   for value in PHOTO_MANAGER_CROP
+                                   if '/' in value])
+
+    # Create an instance of BibRecDocs for the current recid(sysno)
     bibrecdocs = BibRecDocs(sysno)
     for photo_id in photo_manager_order_list:
         photo_description = read_param_file(curdir, 'PHOTO_MANAGER_DESCRIPTION_' + photo_id)
@@ -132,29 +146,70 @@ def Move_Photos_to_Storage(parameters, curdir, form, user_info=None):
                 filepath = os.path.join(curdir, 'files', str(user_info['uid']),
                                         'file', filename)
                 icon_filename = os.path.splitext(filename)[0] + ".gif"
-                fileiconpath = os.path.join(curdir, 'icons', str(user_info['uid']),
-                                            'file', icon_filename)
+                fileiconpath = os.path.join(curdir, 'icons',
+                                            str(user_info['uid']), 'file',
+                                            icon_filename)
 
                 # Add the file
                 if os.path.exists(filepath):
                     _do_log(curdir, "Adding file %s" % filepath)
-                    bibdoc = bibrecdocs.add_new_file(filepath, doctype="picture", never_fail=True)
+                    bibdoc = bibrecdocs.add_new_file(filepath,
+                                                     doctype="picture",
+                                                     never_fail=True)
+                    has_added_default_icon_subformat_p = False
+                    # check if there is cropversion for this image
+                    has_crop = photo_id in photo_manager_crop_dict.keys()
+                    if has_crop:
+                        # ok was the vars
+                        dimensions = dict(x.split('=')
+                                          for x in
+                                          photo_manager_crop_dict[photo_id].split('&'))
+                        # perfect let's now create the cropped version
+                        # in order to pass it to the icon_sized bellow
+                        # and have the same sizes for the cropped version
+                        try:
+                            # OK lets create the crop DAH!
+                            (crop_path, crop_name) = create_crop(
+                                filepath,
+                                dimensions['w'].split('.')[0],
+                                dimensions['h'].split('.')[0],
+                                dimensions['x'].split('.')[0],
+                                dimensions['y'].split('.')[0]
+                            )
+                            _do_log(curdir,
+                                    "Crop file and name %s: %s"
+                                    % (crop_path, crop_name))
+                            crop_file_path = os.path.join(crop_path, crop_name)
+                            # Add a new file format
+                            # Get first the enxtension
+                            (dummy, dummy, ext) = decompose_file(crop_file_path)
+                            bibdoc.add_file_new_format(crop_file_path,
+                                                       docformat='%s;crop' % (ext),
+                                                       )
+                        except InvenioWebSubmitCropCreatorError, e:
+                            _do_log(curdir,
+                                    "Cropped couldn't be created to %s: %s"
+                                    % (filepath, e))
+                            pass
+
                     has_added_default_icon_subformat_p = False
                     for icon_size in icon_sizes:
                         # Create icon if needed
                         try:
                             (icon_path, icon_name) = create_icon(
-                                { 'input-file'           : filepath,
-                                  'icon-name'            : icon_filename,
-                                  'icon-file-format'     : icon_format,
-                                  'multipage-icon'       : False,
-                                  'multipage-icon-delay' : 100,
-                                  'icon-scale'           : icon_size, # Resize only if width > 300
-                                  'verbosity'            : 0,
-                                  })
+                                {'input-file': filepath,
+                                 'icon-name': icon_filename,
+                                 'icon-file-format': icon_format,
+                                 'multipage-icon': False,
+                                 'multipage-icon-delay': 100,
+                                 'icon-scale': icon_size,
+                                 'verbosity': 0,
+                                 })
                             fileiconpath = os.path.join(icon_path, icon_name)
                         except InvenioWebSubmitIconCreatorError, e:
-                            _do_log(curdir, "Icon could not be created to %s: %s" % (filepath, e))
+                            _do_log(curdir,
+                                    "Icon could not be created to %s: %s"
+                                    % (filepath, e))
                         if os.path.exists(fileiconpath):
                             try:
                                 if not has_added_default_icon_subformat_p:
@@ -177,16 +232,60 @@ def Move_Photos_to_Storage(parameters, curdir, form, user_info=None):
         else:
             # Existing file
             bibdocname = bibrecdocs.get_docname(int(photo_id))
+            bibdoc = bibrecdocs.get_bibdoc(bibdocname)
             if photo_id in photo_manager_delete_list:
                 # In principle we should not get here. but just in case...
                 bibrecdocs.delete_bibdoc(bibdocname)
                 _do_log(curdir, "Deleted  %s" % bibdocname)
             else:
-                bibdoc = bibrecdocs.get_bibdoc(bibdocname)
-                for file_format in [bibdocfile.get_format() \
-                               for bibdocfile in bibdoc.list_latest_files()]:
-                    bibdoc.set_comment(photo_description, file_format)
-                    _do_log(curdir, "Added comment %s" % photo_description)
+                # Check if a new crop
+                has_crop = photo_id in photo_manager_crop_dict.keys()
+                _do_log(curdir, "I'm here on modification for photo_id %s" % photo_id)
+                if has_crop:
+                    # ok was the vars
+                    dimensions = dict(x.split('=')
+                                      for x in
+                                      photo_manager_crop_dict[photo_id].split('&'))
+                    # perfect let's now create the cropped version
+                    # in order to pass it to the icon_sized bellow
+                    # and have the same sizes for the cropped version
+                    try:
+                        filepath = [file.get_full_path() for file in bibdoc.list_all_files() if file.get_subformat() == ''][0]
+                        # OK lets create the crop DAH!
+                        (crop_path, crop_name) = create_crop(
+                            filepath,
+                            dimensions['w'].split('.')[0],
+                            dimensions['h'].split('.')[0],
+                            dimensions['x'].split('.')[0],
+                            dimensions['y'].split('.')[0]
+                        )
+
+                        crop_file_path = os.path.join(crop_path, crop_name)
+
+                        # Add a new file format
+                        (dummy, dummy, ext) = decompose_file(crop_file_path)
+
+                        # Get first the enxtension
+                        format_name = '%s;crop' %(ext)
+
+                        # Check if the format already exists
+                        if bibdoc.format_already_exists_p(format_name):
+                            match_crop_re = re.compile('crop')
+                            bibdoc.delete_icon(match_crop_re)
+                        # Add the crop
+                        bibdoc.add_file_new_format(crop_file_path, docformat=format_name)
+                    except InvenioWebSubmitCropCreatorError, e:
+                        _do_log(curdir,
+                                "Cropped couldn't be created to %s: %s"
+                                % (filepath, e))
+                        pass
+
+                # Update the descriptions
+                if bibdoc:
+                    for file_format in [bibdocfile.get_format() \
+                                   for bibdocfile in bibdoc.list_latest_files()]:
+                        bibdoc.set_comment(photo_description, file_format)
+                        _do_log(curdir, "Added comment %s" % photo_description)
 
     # Now delete requeted files
     for photo_id in photo_manager_delete_list:
@@ -206,8 +305,8 @@ def Move_Photos_to_Storage(parameters, curdir, form, user_info=None):
     # Delete the HB BibFormat cache in the DB, so that the fulltext
     # links do not point to possible dead files
     run_sql("DELETE LOW_PRIORITY from bibfmt WHERE format='HB' AND id_bibrec=%s", (sysno,))
-
     return ""
+
 
 def read_param_file(curdir, param, split_lines=False):
     "Helper function to access files in submission dir"
@@ -225,6 +324,7 @@ def read_param_file(curdir, param, split_lines=False):
         _do_log(curdir, 'Could not read %s: %s' % (param, e))
     return param_value
 
+
 def _do_log(log_dir, msg):
     """
     Log what we have done, in case something went wrong.
@@ -234,8 +334,9 @@ def _do_log(log_dir, msg):
     """
     log_file = os.path.join(log_dir, 'performed_actions.log')
     file_desc = open(log_file, "a+")
-    file_desc.write("%s --> %s\n" %(time.strftime("%Y-%m-%d %H:%M:%S"), msg))
+    file_desc.write("%s --> %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"), msg))
     file_desc.close()
+
 
 def get_session_id(req, uid, user_info):
     """
@@ -244,7 +345,7 @@ def get_session_id(req, uid, user_info):
     Raises ValueError if cannot be found
     """
     # Get the session id
-    ## This can be later simplified once user_info object contain 'sid' key
+    # This can be later simplified once user_info object contain 'sid' key
     session_id = None
     try:
         try:
@@ -257,6 +358,7 @@ def get_session_id(req, uid, user_info):
         raise ValueError("Cannot retrieve user session")
 
     return session_id
+
 
 def create_photos_manager_interface(sysno, session_id, uid,
                                     doctype, indir, curdir, access,
@@ -292,6 +394,8 @@ def create_photos_manager_interface(sysno, session_id, uid,
     """
 
     out = ''
+    PHOTO_MANAGER_CROP = read_param_file(curdir, 'PHOTO_MANAGER_CROP', split_lines=True)
+    photo_manager_crop_dict = dict([value.split('/', 1) for value in PHOTO_MANAGER_CROP if '/' in value])
 
     PHOTO_MANAGER_ICONS = read_param_file(curdir, 'PHOTO_MANAGER_ICONS', split_lines=True)
     photo_manager_icons_dict = dict([value.split('/', 1) for value in PHOTO_MANAGER_ICONS if '/' in value])
@@ -303,9 +407,17 @@ def create_photos_manager_interface(sysno, session_id, uid,
     photo_manager_new_dict = dict([value.split('/', 1) for value in PHOTO_MANAGER_NEW if '/' in value])
     photo_manager_descriptions_dict = {}
     photo_manager_photo_fullnames = {}
+    photo_manager_meta = {}
     # Compile a regular expression that can match the "default" icon,
     # and not larger version.
     CFG_BIBDOCFILE_ICON_SUBFORMAT_RE_DEFAULT = re.compile(CFG_BIBDOCFILE_DEFAULT_ICON_SUBFORMAT + '\Z')
+
+    crop_link = """<a rel='crop' href='javascript:void(0)' data-type="modify"
+                      data-icon-1440='%(icon_1440)s' data-path='%(fullpath)s'
+                      data-id='%(doc_id)s' data-name='%(fullname)s'
+                      data-thumb='%(icon_url)s'>
+                   %(crop_text)s
+                  </a> """
 
     # Load the existing photos from the DB if we are displaying
     # this interface for the first time, and if a record exists
@@ -314,11 +426,35 @@ def create_photos_manager_interface(sysno, session_id, uid,
         for doc in bibarchive.list_bibdocs():
             if doc.get_icon() is not None:
                 doc_id = str(doc.get_id())
-                icon_url = doc.get_icon(subformat_re=CFG_BIBDOCFILE_ICON_SUBFORMAT_RE_DEFAULT).get_url() # Get "default" icon
+                photo_manager_meta[doc_id] = {}
+                icon_url = doc.get_icon(subformat_re=CFG_BIBDOCFILE_ICON_SUBFORMAT_RE_DEFAULT).get_url()
                 description = ""
-                bibdoc_file = None
+
+                sizes = dict([(x.get_subformat() if x.get_subformat() != '' else 'master',
+                          (x.get_url(), x.get_full_path())) for x in doc.list_all_files()])
+
+                # Check if image is cropped
+                is_cropped = True if 'crop' in sizes.keys() else False
+                photo_manager_meta[doc_id].update({'is_cropped': is_cropped})
+
+                # if the master format is missing the image cannot be cropped
+                image_can_be_cropped = True if 'master' in sizes.keys() and sizes['master'][1] else False
+                photo_manager_meta[doc_id].update({'can_cropped': image_can_be_cropped})
+
+                if image_can_be_cropped:
+                    try:
+                        image_preview_size = sizes[CFG_WEBSUBMIT_CROP_PREVIEW_SIZE][0]
+                    except:
+                        image_preview_size = sizes['master'][0]
+
+                    photo_manager_meta[doc_id].update({'preview_image': image_preview_size})
+                    photo_manager_meta[doc_id].update({'fullpath': sizes['master'][1]})
+
                 for bibdoc_file in doc.list_latest_files():
-                    if bibdoc_file and bibdoc_file.get_comment() and not description:
+                    # format = bibdoc_file.get_format().lstrip('.').upper()
+                    # url = bibdoc_file.get_url()
+                    # photo_files.append((format, url))
+                    if not description and bibdoc_file.get_comment():
                         description = escape(bibdoc_file.get_comment())
                 photo_manager_descriptions_dict[doc_id] = description
                 photo_manager_icons_dict[doc_id] = icon_url
@@ -326,12 +462,13 @@ def create_photos_manager_interface(sysno, session_id, uid,
                     photo_manager_photo_fullnames[doc_id] = bibdoc_file.fullname
                 except:
                     photo_manager_photo_fullnames[doc_id] = ""
-                photo_manager_order_list.append(doc_id) # FIXME: respect order
+                photo_manager_order_list.append(doc_id)
 
     # Prepare the list of photos to display.
     photos_img = []
     for doc_id in photo_manager_order_list:
-        if not photo_manager_icons_dict.has_key(doc_id):
+
+        if doc_id not in photo_manager_icons_dict.keys():
             continue
 
         icon_url = photo_manager_icons_dict[doc_id]
@@ -344,38 +481,85 @@ def create_photos_manager_interface(sysno, session_id, uid,
         else:
             description = escape(photo_manager_descriptions_dict[doc_id])
 
+        link_to_crop = ''
+        if photo_manager_meta[doc_id]['can_cropped']:
+            link_to_crop = crop_link % {'crop_text': 'Cropped (change)' if photo_manager_meta[doc_id]['is_cropped'] else 'Crop',
+                                        'icon_1440': photo_manager_meta[doc_id]['preview_image'],
+                                        'fullpath': photo_manager_meta[doc_id]['fullpath'],
+                                        'fullname': fullname,
+                                        'doc_id': doc_id,
+                                        'icon_url': icon_url}
         photos_img.append('''
         <div class='previewer' id='%(doc_id)s'>
-            <div data-id='%(doc_id)s' data-file_id='%(doc_id)s' data-order='%(doc_id)s' class='thumbnail'>
-                <a href='javascript:void(0)'  class='remove_image' data-file='%(fullname)s' data-id='%(doc_id)s'>&cross;</a>
+            <div data-id='%(doc_id)s' class='thumbnail'>
+                <a href='javascript:void(0)'  class='remove_image' data-file='%(fullname)s' data-id='%(doc_id)s'><img src='%(CFG_SITE_URL)s/img/wb-delete-basket.png'/></a>
                 <div class='thumbnail-wrapper'>
                 <img class='imageIcon' src='%(icon_url)s' />
                 </div>
                 <div style='clear:both'></div>
+                %(crop_link)s
                 <span class='filename'>%(fullname)s</span>
-                <textarea placeholder='Add a description' id='PHOTO_MANAGER_DESCRIPTION_%(doc_id)s' name='PHOTO_MANAGER_DESCRIPTION_%(doc_id)s'>%(description)s</textarea>
+                <textarea placeholder='Add an english description' id='PHOTO_MANAGER_DESCRIPTION_%(doc_id)s' name='PHOTO_MANAGER_DESCRIPTION_%(doc_id)s'>%(description)s</textarea>
+                <div class='clear:both'></div>
             </div>
-        </div>''' % {
-                  'fullname': fullname,
-                  'doc_id': doc_id,
-                  'icon_url': icon_url,
-                  'description': description})
+        </div>''' % {'fullname': fullname,
+                     'doc_id': doc_id,
+                     'CFG_SITE_URL': CFG_SITE_URL,
+                     'crop_link': link_to_crop,
+                     'icon_url': icon_url,
+                     'description': description})
 
     out += '''
     <!-- Required scripts -->
-    <script type="text/javascript" src="/js/plupload/plupload.full.js"></script>
-    <script type="text/javascript" src="/js/plupload/jquery.plupload.queue/jquery.plupload.queue.js"></script>
+    <script type="text/javascript" src="%(CFG_SITE_URL)s/js/json2.js"></script>
+    <script type="text/javascript" src="%(CFG_SITE_URL)s/static/magnific_popup/jquery.magnific-popup.min.js"></script>
+    <script type="text/javascript" src="%(CFG_SITE_URL)s/js/crop.js"></script>
+    <script type="text/javascript" src="%(CFG_SITE_URL)s/static/crop/jquery.Jcrop.min.js"></script>
+
+    <script type="text/javascript" src="%(CFG_SITE_URL)s/js/plupload/plupload.full.js"></script>
+    <script type="text/javascript" src="%(CFG_SITE_URL)s/js/plupload/jquery.plupload.queue/jquery.plupload.queue.js"></script>
     <!-- Required scripts -->
     <!-- Required CSS -->
-    <link rel="stylesheet" href="/img/websubmit.css" type="text/css" />
+    <link rel="stylesheet" href="%(CFG_SITE_URL)s/img/websubmit.css" type="text/css" />
+    <link rel="stylesheet" href="%(CFG_SITE_URL)s/static/magnific_popup/magnific-popup.css" type="text/css" />
+    <link rel="stylesheet" href="%(CFG_SITE_URL)s/static/crop/jquery.Jcrop.min.css" type="text/css" />
     <!-- Required CSS -->
-
+    <style type="text/css">
+        .button-wrapper{
+            background: #fff;
+            padding: 10px;
+        }
+        .jcrop-holder{
+            margin: 0 auto;
+        }
+        .button-wrapper a{
+            padding: 5px 15px ;
+        }
+        .white-popup-big{
+            background: #222;
+        }
+        .white-popup-content{
+            padding:10px;
+        }
+        .empty-state{
+            margin: 0 auto;
+            padding: 20px;
+            display: block;
+        }
+        #target{
+            max-width:960px;
+        }
+        .button-wrapper-close{
+            text-align:right;
+         }
+    </style>
     <script type="text/javascript">
 
     $(document).ready(function() {
         var $images   = []
           , $ids      = []
           , $replaced = []
+          , deferred  = $.Deferred()
           , $message = $('.uploader-alert');
 
         /* Uploading */
@@ -442,9 +626,15 @@ def create_photos_manager_interface(sysno, session_id, uid,
                         if(duplicates.length > 0){
                             var message;
                             if(duplicates.length == 1){
-                                message = "There is one duplicate ["+files[duplicates[0]].name+"]. \\n Press ok to replace it otherwise cancel to ignore it.";
+                                message = 'There is one duplicate ' +
+                                          '["+files[duplicates[0]].name+"].' +
+                                          '\\n Press ok to replace it' +
+                                          'otherwise ancel to ignore it.';
                             }else{
-                                message = "There are " + duplicates.length + " duplicate files. \\n Press ok to replace it otherwise cancel to ignore it.";
+                                message ='There are "+ duplicates.length+"' +
+                                          'duplicate files. \\n Press ok ' +
+                                          'to replace it otherwise cancel ' +
+                                          'to ignore it.';
                             }
                             if(confirm(message)){
                                 for(var i=0; i<duplicates.length; i++){
@@ -504,16 +694,219 @@ def create_photos_manager_interface(sysno, session_id, uid,
                     $replaced[file.name].newID = file.id;
                     format_picture($replaced[file.name].oldID, file);
                 }else{
-                    format_picture(file.id, file);
+                    format_picture(file.id, file, uploadedImage.file);
                 }
                 $('#photo_manager_icons').val($("#photo_manager_icons").val() + '\\n' + file.id + '/' + icon_url);
                 $('#photo_manager_new').val($("#photo_manager_new").val() + '\\n' + file.id + '/' + file.name);
             });
         }
 
-        function build_icon_url(icon_name){
-            return '%(CFG_SITE_URL)s/submit/getuploadedfile?indir=%(indir)s&doctype=%(doctype)s&access=%(access)s&key=file&icon=1&filename=' + icon_name
+        function get_original_image_dimensions(name, fullpath){
+            /* It returns the dimensions fo the requested image
+             * ====================================================
+             * @name (str) : The filename (including the extension)
+            */
+            var getDef = $.Deferred()
+              , fullpath = (fullpath === undefined) ? '' : fullpath;
+
+            $.get(build_icon_url(name, 'files', 'yes', fullpath))
+             .done(function(response){getDef.resolve(response);})
+             .fail(function(jqxhr, err){getDef.reject();});
+             return getDef.promise();
         }
+
+        function build_icon_url(name, type, onlysize, filepath){
+            /* It creates the url for the desired size/type image
+             * ==================================================
+             * @name (str) : The filename (including the extension)
+             * @type (str) : In which folder of running directory
+             *               you want to search for. Possible values
+             *               icon | crop | files (Default: icon)
+             * Note
+             * ----
+             * The icon should be
+             * '%(CFG_SITE_URL)s/submit/getuploadedfile?indir=%(indir)s&doctype=%(doctype)s
+             * &access=%(access)s&key=file&icon=1&filename=' + icon_name
+            */
+
+            // If type is unsigned add the default icon value
+            type     = (type     === undefined) ? 'icon' : type;
+            onlysize = (onlysize === undefined) ? ''     : onlysize;
+            filepath = (filepath === undefined) ? ''     : filepath;
+
+            // Build the data parameters
+            var data = $.param({
+                'indir'    : '%(indir)s',
+                'doctype'  : '%(doctype)s',
+                'access'   : '%(access)s',
+                'filename' :  name,
+                'key'      : 'file',
+                'type'     : type,
+                'onlysize' : onlysize,
+                'filepath' : filepath
+            });
+            // Return the url
+            return '%(CFG_SITE_URL)s/submit/getuploadedfile?'+data
+        }
+
+        function create_thumbnail_for_cropping(name){
+            /* It creates a 1440 wide image for the cropping interface
+             * =======================================================
+             * @name   (str) : The filename (including the extension)
+             *
+             * @return (str) : Image filename
+             *
+             * Note
+             * ----
+             * We don't check if already exists beacuse maybe it has
+             * been replaced.
+            */
+            if(deferred.state() == 'pending'){
+                deferred.reject('abort');
+            }
+            deferred = $.Deferred();
+            var data     = {
+                    'indir'    : '%(indir)s',
+                    'doctype'  : '%(doctype)s',
+                    'access'   : '%(access)s',
+                    'key'      : 'file',
+                    'action'   : 'create_ready_to_crop',
+                    'filename' : name
+                }
+
+            // Make the request
+            $.ajax({
+                url : '%(CFG_SITE_URL)s/submit/crop_image',
+                data : data
+            })
+            .done(function(response){
+                deferred.resolve(build_icon_url(response));
+            })
+            .fail(function(jqXHR, textStatus, errorThrown){
+                deferred.reject(textStatus);
+            })
+            // return the promise
+            return deferred.promise();
+        }
+
+        function create_cropped_image(name, crop){
+            /* It creates a cropped version of the image
+             * =========================================
+             * @name   (str) : The filename (including the extension)
+             *
+             * @return (str) : Image filename
+             *
+             * Note
+             * ----
+             * We don't check if already exists beacuse maybe it has
+             * been replaced.
+            */
+            if(deferred.state() == 'pending'){
+                deferred.reject('abort');
+            }
+            deferred = $.Deferred();
+            var data     = {
+                    'indir'    : '%(indir)s',
+                    'doctype'  : '%(doctype)s',
+                    'access'   : '%(access)s',
+                    'key'      : 'file',
+                    'action'   : 'create_the_cropped_version',
+                    'filename' : name,
+                    'width'    : crop.w,
+                    'height'   : crop.h,
+                    'pos_x'    : crop.x,
+                    'pos_y'    : crop.y,
+                }
+
+            // Make the request
+            $.ajax({
+                url : '%(CFG_SITE_URL)s/submit/crop_image',
+                data : data
+            })
+            .done(function(response){
+                deferred.resolve(build_icon_url(response));
+            })
+            .fail(function(jqXHR, textStatus, errorThrown){
+                deferred.reject(textStatus);
+            })
+
+            // return the promise
+            return deferred.promise();
+        }
+        /* On crop.click */
+        $('body').on('crop.click', function(event, object, current){
+            var $data = $(object)
+              , $type = $data.data('type');
+
+            /* If type is modify */
+            if($type == 'modify'){
+                var fullpath  = $data.data('path')
+                  , icon_1440 = $data.data('icon-1440');
+
+                $.when(
+                    get_original_image_dimensions('', fullpath)
+                )
+                .done(function(dimensions){
+                    $('body')
+                    .trigger('overlay.ready', [current, icon_1440, dimensions]);
+                })
+                .fail(function(error){
+                    if(error == 'abort'){
+                        // do nothing
+                    }else{
+                        show_overlay('Sorry, something wrong happend \\n');
+                    }
+                });
+            }else{
+                $.when(
+                    create_thumbnail_for_cropping($data.data('name')),
+                    get_original_image_dimensions($data.data('name'))
+                )
+                .done(function(response, dimensions){
+                    $('body')
+                    .trigger('overlay.ready', [current, response, dimensions]);
+                })
+                .fail(function(error){
+                    if(error == 'abort'){
+                        // do nothing
+                    }else{
+                        show_overlay('Sorry, something wrong happend \\n');
+                    }
+                });
+            }
+        });
+        function show_overlay(message){
+            $.magnificPopup.close();
+            setTimeout(function(){
+                $.magnificPopup.open({
+                    modal: true,
+                    key: 'crop-popup',
+                    midClick: true,
+                    type: 'inline',
+                    items:{
+                        src: '<div class="white-popup">'+
+                             '<div class="white-popup-content">'+
+                             message +
+                             '</div>'+
+                             '<div class="button-wrapper button-wrapper-close">'+
+                             '<a href="javascript:void(0)" rel="close">Close</a>'+
+                             '</div>'+
+                             '</div>',
+                    }
+                });
+            }, 0);
+        }
+        /* On crop.save */
+        $('body').on('crop.save', function(event, object, current){
+            $('#'+current.id).find('[rel=crop]').html('<span class="mute">Cropped</span> (Change)');
+            if($('#photo_manager_cropping').val() == ''){
+                $('#photo_manager_cropping').val(current.id + '/' + $.param(current.crop));
+            }else{
+                $('#photo_manager_cropping').val($("#photo_manager_cropping").val() + '\\n' + current.id + '/' + $.param(current.crop));
+            }
+            console.log('Manager', $('#photo_manager_cropping').val());
+        });
+
         function delete_image(filename, docid){
             var index = $.inArray(filename, $images);
             if(index > -1){
@@ -526,29 +919,41 @@ def create_photos_manager_interface(sysno, session_id, uid,
             }
         }
 
-        function format_picture(id, file){
-            $('#'+id).html("<div data-id='"+file.id+"' data-file_id='"+file.id+"' data-order='"+file.id+"' class='thumbnail'>" +
-                           "<a href='javascript:void(0)'  class='remove_image' data-file='"+file.name+"' data-id='"+file.id+"'><img src='/img/wb-delete-basket.png'/></a>"+
+        function format_picture(id, file, response){
+            // Get urls for cropped preview and thumbnail
+            var crop_thumb    = build_icon_url(response.name, 'files')
+              , image_thumb   = build_icon_url(response.iconName)
+              , image_absPath = response.absPath;
+
+            $('#'+id).html("<div data-id='"+file.id+"' class='thumbnail'>" +
+                           "<a href='javascript:void(0)'  class='remove_image' data-file='"+file.name+"' data-id='"+file.id+"'><img src='%(CFG_SITE_URL)s/img/wb-delete-basket.png'/></a>"+
                            "<div class='thumbnail-wrapper'>"+
-                           "<img class='imageIcon' src='"+icon_url+"' />"+
+                           "<img class='imageIcon' src='"+image_thumb+"' />"+
                            "</div>"+
                            "<div style='clear:both'></div>"+
+                           "<a rel='crop' href='javascript:void(0)' data-id='"+file.id+"' data-name='"+file.name+"' data-original='"+response.absPath+"' data-thumb='"+crop_thumb+"'>Crop</a>"+
                            "<span class='filename'>"+file.name+"</span>"+
-                           "<textarea placeholder='Add a description' id='PHOTO_MANAGER_DESCRIPTION_"+ file.id +"' name='PHOTO_MANAGER_DESCRIPTION_"+ file.id +"'></textarea>" +
+                           "<textarea placeholder='Add an english description' id='PHOTO_MANAGER_DESCRIPTION_"+ file.id +"' name='PHOTO_MANAGER_DESCRIPTION_"+ file.id +"'></textarea>" +
+                           "<div class='clear:both'></div>"+
+                           "<div class='language_control' data-id='"+file.id+"'> " +
+                           "</div>"+
                            "</div>");
         }
         var onclick = $('[type=button]').attr('onclick');
         $('[type=button]').attr('onclick', '');
         $('[type=button]').click(function(e){
             var $that = $(this);
-            $that.attr('disabled', true);
+            $that.prop('disabled', true);
             $that.parent().append('<p class="loading">Submiting please wait...</p>');
             e.stopPropagation();
             var theids = [];
             $.when($.each($images, function(index, filename){
                 theids.push($ids[filename]);
             })).done(function(){
-                $('#photo_manager_order').val(theids.join('\\n'));
+                // Get also the previous
+                current = $('#photo_manager_order').val().split('\\n');
+                current = current.concat(theids);
+                $('#photo_manager_order').val(current.join('\\n'));
                 // Really dirty
                 // FIXME: Remove this ungly eval
                var re =  eval(onclick);
@@ -563,13 +968,13 @@ def create_photos_manager_interface(sysno, session_id, uid,
             var docid = $(this).data('id');
             var filename = $(this).data('file');
             if (confirm("Are you sure you want to delete the photo? (The file will be deleted after you apply all the modifications)")) {
-                    delete_image(filename, docid);
-                    $("[data-id="+docid+"]").parent().remove();
+                delete_image(filename, docid);
+                $("[data-id="+docid+"]").parent().remove();
             }
         });
     });
     </script>
-
+    <div class="uploader-alert uploader-alert-hidden"></div>
     <div id="calluploader" class="uploadedImages">
         <div id="dropzone">
             <div id="dropzone-container">
@@ -585,7 +990,7 @@ def create_photos_manager_interface(sysno, session_id, uid,
     <textarea id="photo_manager_order" style="display:none" name="PHOTO_MANAGER_ORDER">%(PHOTO_MANAGER_ORDER)s</textarea>
     <textarea id="photo_manager_new" style="display:none" name="PHOTO_MANAGER_NEW">%(PHOTO_MANAGER_NEW)s</textarea>
     <textarea id="photo_manager_delete" style="display:none" name="PHOTO_MANAGER_DELETE">%(PHOTO_MANAGER_DELETE)s</textarea>
-
+    <textarea id="photo_manager_cropping" style="display:none" name="PHOTO_MANAGER_CROPPING"></textarea>
     <div style="clear:both;"></div>
     ''' % {'CFG_SITE_URL': CFG_SITE_URL,
            'access': quote(access, safe=""),
@@ -597,7 +1002,10 @@ def create_photos_manager_interface(sysno, session_id, uid,
            'PHOTO_MANAGER_DELETE': '\n'.join(photo_manager_delete_list),
            'PHOTO_MANAGER_NEW': '\n'.join([key + '/' + value for key, value in photo_manager_new_dict.iteritems()]),
            'photos_img': '\n'.join(photos_img),
+           'hide_photo_viewer': (len(photos_img) == 0 and len(photo_manager_new_dict.keys()) == 0) and 'display:none;' or '',
+           'delete_hover_class': can_delete_photos and "#sortable li div.imgBlock:hover .hidden {display:inline;}" or '',
            'can_upload_photos': can_upload_photos and 'true' or 'false',
+           'upload_display': not can_upload_photos and 'display: none' or '',
            }
 
     return out
