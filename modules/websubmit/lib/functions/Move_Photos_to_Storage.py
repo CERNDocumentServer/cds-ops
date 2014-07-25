@@ -137,6 +137,8 @@ def Move_Photos_to_Storage(parameters, curdir, form, user_info=None):
     bibrecdocs = BibRecDocs(sysno)
     for photo_id in photo_manager_order_list:
         photo_description = read_param_file(curdir, 'PHOTO_MANAGER_DESCRIPTION_' + photo_id)
+        # Read also fr description
+        photo_description_fr = read_param_file(curdir, 'PHOTO_MANAGER_DESCRIPTION_' + photo_id+ '_fr')
         # We must take different actions depending if we deal with a
         # file that already exists, or if it is a new file
         if photo_id in photo_manager_new_dict.keys():
@@ -228,6 +230,8 @@ def Move_Photos_to_Storage(parameters, curdir, form, user_info=None):
                         for file_format in [bibdocfile.get_format() \
                                        for bibdocfile in bibdoc.list_latest_files()]:
                             bibdoc.set_comment(photo_description, file_format)
+                            if photo_description_fr:
+                                bibdoc.set_description(photo_description_fr, file_format)
                             _do_log(curdir, "Added comment %s" % photo_description)
         else:
             # Existing file
@@ -285,6 +289,7 @@ def Move_Photos_to_Storage(parameters, curdir, form, user_info=None):
                     for file_format in [bibdocfile.get_format() \
                                    for bibdocfile in bibdoc.list_latest_files()]:
                         bibdoc.set_comment(photo_description, file_format)
+                        bibdoc.set_description(photo_description_fr, file_format)
                         _do_log(curdir, "Added comment %s" % photo_description)
 
     # Now delete requeted files
@@ -406,6 +411,7 @@ def create_photos_manager_interface(sysno, session_id, uid,
     PHOTO_MANAGER_NEW = read_param_file(curdir, 'PHOTO_MANAGER_NEW', split_lines=True)
     photo_manager_new_dict = dict([value.split('/', 1) for value in PHOTO_MANAGER_NEW if '/' in value])
     photo_manager_descriptions_dict = {}
+    photo_manager_descriptions_dict_fr = {}
     photo_manager_photo_fullnames = {}
     photo_manager_meta = {}
     # Compile a regular expression that can match the "default" icon,
@@ -429,6 +435,7 @@ def create_photos_manager_interface(sysno, session_id, uid,
                 photo_manager_meta[doc_id] = {}
                 icon_url = doc.get_icon(subformat_re=CFG_BIBDOCFILE_ICON_SUBFORMAT_RE_DEFAULT).get_url()
                 description = ""
+                description_fr = ""
 
                 sizes = dict([(x.get_subformat() if x.get_subformat() != '' else 'master',
                           (x.get_url(), x.get_full_path())) for x in doc.list_all_files()])
@@ -456,7 +463,11 @@ def create_photos_manager_interface(sysno, session_id, uid,
                     # photo_files.append((format, url))
                     if not description and bibdoc_file.get_comment():
                         description = escape(bibdoc_file.get_comment())
+                    if not description_fr and bibdoc_file.get_description():
+                        description_fr = escape(bibdoc_file.get_description())
+
                 photo_manager_descriptions_dict[doc_id] = description
+                photo_manager_descriptions_dict_fr[doc_id] = description_fr
                 photo_manager_icons_dict[doc_id] = icon_url
                 try:
                     photo_manager_photo_fullnames[doc_id] = bibdoc_file.fullname
@@ -476,10 +487,13 @@ def create_photos_manager_interface(sysno, session_id, uid,
 
         if PHOTO_MANAGER_ORDER:
             # Get description from disk only if some changes have been done
-            description = escape(read_param_file(curdir,
-                                 'PHOTO_MANAGER_DESCRIPTION_' + doc_id))
+            description = escape(read_param_file(curdir, 'PHOTO_MANAGER_DESCRIPTION_' + doc_id))
+            description_fr = escape(read_param_file(curdir, 'PHOTO_MANAGER_DESCRIPTION_' + doc_id+'_fr'))
         else:
             description = escape(photo_manager_descriptions_dict[doc_id])
+            description_fr = escape(photo_manager_descriptions_dict_fr[doc_id])
+
+        # Try to read the crop parameter
 
         link_to_crop = ''
         if photo_manager_meta[doc_id]['can_cropped']:
@@ -499,14 +513,19 @@ def create_photos_manager_interface(sysno, session_id, uid,
                 <div style='clear:both'></div>
                 %(crop_link)s
                 <span class='filename'>%(fullname)s</span>
-                <textarea placeholder='Add an english description' id='PHOTO_MANAGER_DESCRIPTION_%(doc_id)s' name='PHOTO_MANAGER_DESCRIPTION_%(doc_id)s'>%(description)s</textarea>
+                <textarea placeholder='Add an English description' id='PHOTO_MANAGER_DESCRIPTION_%(doc_id)s' name='PHOTO_MANAGER_DESCRIPTION_%(doc_id)s'>%(description)s</textarea>
+                <textarea style='display:none' placeholder='Add a French description' id='PHOTO_MANAGER_DESCRIPTION_%(doc_id)s_fr' name='PHOTO_MANAGER_DESCRIPTION_%(doc_id)s_fr'>%(description_fr)s</textarea>
                 <div class='clear:both'></div>
+                <div class='language_control' data-id='%(doc_id)s'>
+                <a href='javascript:void(0)' class='active_lang' rel='english'>English</a><a href='javascript:void(0)' rel='french'>French</a>
+                </div>
             </div>
         </div>''' % {'fullname': fullname,
                      'doc_id': doc_id,
                      'CFG_SITE_URL': CFG_SITE_URL,
                      'crop_link': link_to_crop,
                      'icon_url': icon_url,
+                     'description_fr': description_fr,
                      'description': description})
 
     out += '''
@@ -918,7 +937,20 @@ def create_photos_manager_interface(sysno, session_id, uid,
                 $("#photo_manager_delete").val($("#photo_manager_delete").val() + '\\n' + docid);
             }
         }
-
+        $('body').on('click', '.language_control a', function(){
+            var id = $(this).parent().data('id')
+              , rel = $(this).attr('rel')
+              , search = '#PHOTO_MANAGER_DESCRIPTION_'+id;
+            $(this).parent().find('a').removeClass('active_lang');
+            $(this).addClass('active_lang');
+            if(rel == 'english'){
+                $(search+'_fr').hide();
+                $(search).show();
+            }else{
+                $(search).hide();
+                $(search+'_fr').show();
+            }
+        });
         function format_picture(id, file, response){
             // Get urls for cropped preview and thumbnail
             var crop_thumb    = build_icon_url(response.name, 'files')
@@ -933,9 +965,11 @@ def create_photos_manager_interface(sysno, session_id, uid,
                            "<div style='clear:both'></div>"+
                            "<a rel='crop' href='javascript:void(0)' data-id='"+file.id+"' data-name='"+file.name+"' data-original='"+response.absPath+"' data-thumb='"+crop_thumb+"'>Crop</a>"+
                            "<span class='filename'>"+file.name+"</span>"+
-                           "<textarea placeholder='Add an english description' id='PHOTO_MANAGER_DESCRIPTION_"+ file.id +"' name='PHOTO_MANAGER_DESCRIPTION_"+ file.id +"'></textarea>" +
+                           "<textarea placeholder='Add an English description' id='PHOTO_MANAGER_DESCRIPTION_"+ file.id +"' name='PHOTO_MANAGER_DESCRIPTION_"+ file.id +"'></textarea>" +
+                           "<textarea style='display:none' placeholder='Add a French description' id='PHOTO_MANAGER_DESCRIPTION_"+ file.id +"_fr' name='PHOTO_MANAGER_DESCRIPTION_"+ file.id +"_fr'></textarea>" +
                            "<div class='clear:both'></div>"+
                            "<div class='language_control' data-id='"+file.id+"'> " +
+                           "<a href='javascript:void(0)' class='active_lang' rel='english'>English</a><a href='javascript:void(0)' rel='french'>French</a>" +
                            "</div>"+
                            "</div>");
         }

@@ -258,6 +258,24 @@ div.cropImgWrapper {
   text-decoration: none;
   background-color: #2860f7;
 }
-.white-popup-big{
-  z-index: 999;
+.language_control {
+  text-align: left;
+  padding: 0px 0px 10px 0;
+  width: 263px!important;
+  border-radius: 0;
+  margin: 2px auto;
+}
+.language_control a{
+  display: inline;
+  line-height: normal!important;
+  padding: 5px 10px;
+}
+.language_control a:hover{
+  text-decoration: none;
+}
+.language_control a.active_lang{
+  border-bottom: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+  background: #fff;
+  border-right: 1px solid #ccc;
 }
