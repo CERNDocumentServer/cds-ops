@@ -98,18 +98,19 @@ def create_icons_for_record(recid, icon_sizes, icon_format_mappings=None,
         bibfiles = bibdoc.list_latest_files()
         bibdoc_formats = [bibfile.get_format() for bibfile in bibfiles]
         for bibfile in bibfiles:
-            if bibfile.get_subformat():
+            if bibfile.get_subformat() not in ['', 'crop']:
                 # this is a subformat, do nothing
                 continue
             filepath = bibfile.get_full_path()
             #do not consider the dot in front of the format
             superformat = bibfile.get_format()[1:].lower()
+            if superformat.find(';') > -1:
+                superformat = superformat[:superformat.index(';')]
             bibfile_icon_formats = icon_format_mappings.get(superformat, icon_format_mappings.get('*', [superformat]))
             if isinstance(bibfile_icon_formats, str):
                 bibfile_icon_formats = [bibfile_icon_formats]
             bibfile_icon_formats = [bibfile_icon_format for bibfile_icon_format in bibfile_icon_formats \
                                     if bibfile_icon_format in CFG_ALLOWED_FILE_EXTENSIONS]
-
             if add_default_icon and not default_icon_added_p:
                 # add default icon
                 try:
@@ -129,7 +130,9 @@ def create_icons_for_record(recid, icon_sizes, icon_format_mappings=None,
             for icon_size in icon_sizes:
                 washed_icon_size = icon_size.replace('>', '').replace('<', '').replace('^', '').replace('!', '')
                 for icon_format in bibfile_icon_formats:
-                    new_format = '.%s;%s-%s' % (icon_format, CFG_BIBDOCFILE_DEFAULT_ICON_SUBFORMAT, washed_icon_size)
+                    # change the default subformat if it's crop
+                    prefix = 'crop' if bibfile.get_subformat() == 'crop' else CFG_BIBDOCFILE_DEFAULT_ICON_SUBFORMAT
+                    new_format = '.%s;%s-%s' % (icon_format, prefix, washed_icon_size)
                     if new_format in bibdoc_formats:
                         # the subformat already exists, do nothing
                         continue
@@ -239,7 +242,7 @@ def bst_create_icons(recid, icon_sizes, icon_format_mappings=None,
         else:
             write_message("Recid %s DONE." % recid)
 
-        task_update_progress("Done %d out of %d." % (i, len(recids)))
+        task_update_progress("Done %d out of %d." % (i+1, len(recids)))
         task_sleep_now_if_required(can_stop_too=True)
 
     if updated:
