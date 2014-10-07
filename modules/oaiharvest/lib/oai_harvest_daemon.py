@@ -1011,7 +1011,7 @@ def call_authorlist_extract(active_file, extracted_file,
                         ticketid = create_authorlist_ticket(matching_fields, \
                                                             identifier, queue)
                         if ticketid:
-                            write_message("authorlist RT ticket %d submitted for %s" % (ticketid, identifier))
+                            write_message("authorlist RT ticket %s submitted for %s" % (ticketid, identifier))
                         else:
                             all_err_msg.append("Error while submitting RT ticket for %s" % (identifier,))
                     # Replace 100,700 fields of original record with extracted fields
