@@ -176,9 +176,6 @@ def perform_request_display_comments_or_remarks(req, recID, display_order='od', 
         for associated_file in res_associated_files:
             associated_files[associated_file['id_comment']] = associated_file
 
-    with open('/tmp/laqqqqqq', 'a') as fp:
-        fp.write(str(associated_files))
-
     # checking non vital arguemnts - will be set to default if wrong
     #if page <= 0 or page.lower() != 'all':
     if page < 0:
@@ -323,8 +320,6 @@ def perform_request_display_comments_or_remarks(req, recID, display_order='od', 
         if grouped_comments:
             display_comment_rounds.append(grouped_comments[-1][0])
         display_comment_rounds.remove('latest')
-
-
 
     body = webcomment_templates.tmpl_get_comments(req,
                                                   recID,
@@ -960,8 +955,9 @@ def query_add_comment_or_remark(reviews=0, recID=0, uid=-1, msg="",
     @param editor_type: the kind of editor used to submit the comment: 'textarea', 'ckeditor'
     @param req: request object. If provided, email notification are sent after we reply to user request.
     @param reply_to: the id of the comment we are replying to with this inserted comment.
-    @param associated_file: dictionary containing all the information about the association of the comment being
-                                    submitted to the bibdocfile that was chosen. ("id_bibdoc:version:mime")
+    @param associated_file: dictionary containing all the information about the
+        association of the comment being submitted to the bibdocfile that was
+        chosen. ("id_bibdoc:version:mime")
     @return: integer >0 representing id if successful, integer 0 if not
     """
 
@@ -1034,7 +1030,6 @@ def query_add_comment_or_remark(reviews=0, recID=0, uid=-1, msg="",
         if associated_file and len(associated_file.split(":")) >= 2:
             id_bibdoc, doc_version = associated_file.split(":")[:2]
             add_comment_to_file_association(recID, new_comid, id_bibdoc, doc_version)
-
 
         parent_reply_order = run_sql("""SELECT reply_order_cached_data from cmtRECORDCOMMENT where id=%s""", (reply_to,))
         if not parent_reply_order or parent_reply_order[0][0] is None:

@@ -69,20 +69,3 @@ def get_bibdocfiles_of_record(recID, only_used_p=False):
                     })
 
     return res
-    if only_used_p:
-        query = """SELECT id_record, bibrec_bibdoc.id_bibdoc,
-                   version, mime, docname, id_comment
-                   FROM cmtRECORDCOMMENT_bibdocfile INNER JOIN bibrec_bibdoc
-                   ON cmtRECORDCOMMENT_bibdocfile.id_bibdoc = bibrec_bibdoc.id_bibdoc
-                   WHERE cmtRECORDCOMMENT_bibdocfile.id_record = %s
-                """
-    else:
-        query = """SELECT docname, version, mime, id_bibrec, bibdocfsinfo.id_bibdoc
-                   FROM bibrec_bibdoc INNER JOIN bibdocfsinfo
-                   ON bibrec_bibdoc.id_bibdoc = bibdocfsinfo.id_bibdoc
-                   WHERE bibrec_bibdoc.id_bibrec = %s
-                    """
-    res = run_sql(query, (recID,),  with_dict=True)
-    return res
-
-

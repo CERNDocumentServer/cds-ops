@@ -108,18 +108,17 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
         Queries dblayer for all the files of the
         record that have associated comments with them
         """
-        argd = wash_urlargd(form, {
-                                    'recid': (int, -1)
-                                  })
+        argd = wash_urlargd(form, {'recid': (int, -1)})
 
         _ = gettext_set_language(argd['ln'])
         uid = getUid(req)
 
         user_info = collect_user_info(req)
-        (auth_code, auth_msg) = check_user_can_view_comments(user_info, self.recid)
+        (auth_code, auth_msg) = check_user_can_view_comments(user_info,
+                                                             self.recid)
         if auth_code:
             return page_not_authorized(req, "../", \
-                                        text = auth_msg)
+                                       text = auth_msg)
 
         return get_cmtrecordcomment_to_bibdocfile_association(argd['recid'])
 
@@ -511,23 +510,25 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
                 # User is not already subscribed, and asked to subscribe
                 subscribe = True
 
-            body = perform_request_add_comment_or_remark(recID=self.recid,
-                                                         ln=argd['ln'],
-                                                         uid=uid,
-                                                         action=argd['action'],
-                                                         msg=argd['msg'],
-                                                         note=argd['note'],
-                                                         score=argd['score'],
-                                                         reviews=self.discussion,
-                                                         comID=argd['comid'],
-                                                         client_ip_address=client_ip_address,
-                                                         editor_type=argd['editor_type'],
-                                                         can_attach_files=can_attach_files,
-                                                         subscribe=subscribe,
-                                                         req=req,
-                                                         attached_files=added_files,
-                                                         warnings=warning_msgs,
-                                                         associated_file=argd['associated_file'])
+            body = perform_request_add_comment_or_remark(
+                recID=self.recid,
+                ln=argd['ln'],
+                uid=uid,
+                action=argd['action'],
+                msg=argd['msg'],
+                note=argd['note'],
+                score=argd['score'],
+                reviews=self.discussion,
+                comID=argd['comid'],
+                client_ip_address=client_ip_address,
+                editor_type=argd['editor_type'],
+                can_attach_files=can_attach_files,
+                subscribe=subscribe,
+                req=req,
+                attached_files=added_files,
+                warnings=warning_msgs,
+                associated_file=argd['associated_file']
+            )
 
             if self.discussion:
                 title = _("Add Review")

@@ -488,7 +488,7 @@ class Template:
                                      'collapse_ctr_class': collapsed_p and 'webcomment_collapse_ctr_right' or 'webcomment_collapse_ctr_down',
                                      'collapse_label': collapsed_p and _("Open") or _("Close")}
         associated_file_element = ''
-        if associated_files and associated_files.get(com_id):
+        try:
             file = associated_files[com_id]
             associated_file_element = """
              <div class="cmt_file_association" doc_code="%(id_bibdoc)s:%(version)s" style="float:right">
@@ -499,6 +499,8 @@ class Template:
                 'version': file['version'],
                 'id_bibdoc': file['id_bibdoc']
             }
+        except (TypeError, KeyError):
+            pass
 
         out += """
 <div class="webcomment_comment_box">
@@ -642,7 +644,7 @@ class Template:
                 _body = '<div class="webcomment_review_pending_approval_message">This review is pending approval due to user reports.</div>'
                 links = ''
         associated_file_element = ''
-        if associated_files and associated_files.get(com_id):
+        try:
             file = associated_files[com_id]
             associated_file_element = """
              <div class="cmt_file_association" doc_code="%(id_bibdoc)s:%(version)s" style="float:right">
@@ -653,6 +655,8 @@ class Template:
                 'version': file['version'],
                 'id_bibdoc': file['id_bibdoc']
             }
+        except (TypeError, KeyError):
+            pass
 
 
         out += '''
@@ -2984,7 +2988,7 @@ class Template:
         _ = gettext_set_language(ln)
 
         files = get_bibdocfiles_of_record(recID, only_used_p=True)
-        files = json.dumps(files).replace('\"', '\'')
+        files = json.dumps(files)
         filter_all_comments_url = '/record/%(recID)s/comments/display?ln=%(ln)s&nb=%(nb)s&filter=' \
                 % {
                     'recID'        : recID,

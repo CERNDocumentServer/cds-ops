@@ -26,30 +26,37 @@ depends_on = ['invenio_release_1_1_0']
 
 def info():
     """Upgrader info."""
-    return "Create a new table to be used for associating comment ids and their record ids with bibdocfile ids"
+    return "Create a new table to be used for associating comment ids and "
+           "their record ids with bibdocfile ids"
 
 
 def do_upgrade():
     """Perform upgrade."""
+
     run_sql("""
-    CREATE TABLE `cmtRECORDCOMMENT_bibdocfile` (
-    `id_record` mediumint(8) unsigned NOT NULL,
-    `id_comment` int(15) unsigned NOT NULL,
-    `id_bibdoc` mediumint(9) unsigned NOT NULL,
-    `version` tinyint(4) unsigned NOT NULL,
-    `format` varchar(50) NOT NULL,
-    KEY `id_record` (`id_record`),
-    KEY `id_comment` (`id_comment`),
-    KEY `id_bibdoc` (`id_bibdoc`),
-    KEY `version` (`version`),
-    KEY `format` (`format`),
-    PRIMARY KEY (`id_record`,`id_comment`,`id_bibdoc`,`version`,`format`),
-    CONSTRAINT `cmtRECORDCOMMENT_bibdocfile_ibfk_1` FOREIGN KEY (`id_record`) REFERENCES `bibrec` (`id`),
-    CONSTRAINT `cmtRECORDCOMMENT_bibdocfile_ibfk_2` FOREIGN KEY (`id_comment`) REFERENCES `cmtRECORDCOMMENT` (`id`),
-    CONSTRAINT `cmtRECORDCOMMENT_bibdocfile_ibfk_3` FOREIGN KEY (`id_bibdoc`,`version`,`format`)
-                                      REFERENCES `bibdocfsinfo` (`id_bibdoc`,`version`,`format`)
-    ) ENGINE=MyISAM;
-    """)
+        CREATE TABLE IF NOT EXISTS `cmtRECORDCOMMENT_bibdocfile` (
+        `id_record` mediumint(8) unsigned NOT NULL,
+        `id_comment` int(15) unsigned NOT NULL,
+        `id_bibdoc` mediumint(9) unsigned NOT NULL,
+        `version` tinyint(4) unsigned NOT NULL,
+        `format` varchar(50) NOT NULL,
+        KEY `id_record` (`id_record`),
+        KEY `id_comment` (`id_comment`),
+        KEY `id_bibdoc` (`id_bibdoc`),
+        KEY `version` (`version`),
+        KEY `format` (`format`),
+        PRIMARY KEY (`id_record`,`id_comment`,`id_bibdoc`,`version`,`format`),
+        CONSTRAINT `cmtRECORDCOMMENT_bibdocfile_ibfk_1`
+            FOREIGN KEY (`id_record`)
+            REFERENCES `bibrec` (`id`),
+        CONSTRAINT `cmtRECORDCOMMENT_bibdocfile_ibfk_2`
+            FOREIGN KEY (`id_comment`)
+            REFERENCES `cmtRECORDCOMMENT` (`id`),
+        CONSTRAINT `cmtRECORDCOMMENT_bibdocfile_ibfk_3`
+            FOREIGN KEY (`id_bibdoc`,`version`,`format`)
+            REFERENCES `bibdocfsinfo` (`id_bibdoc`,`version`,`format`)
+        ) ENGINE=MyISAM;
+        """)
 
 def estimate():
     """  Estimate running time of upgrade in seconds (optional). """
