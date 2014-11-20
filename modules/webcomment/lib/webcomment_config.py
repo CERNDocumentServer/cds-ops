@@ -66,7 +66,7 @@ if CFG_CERN_SITE:
         "ATLASPUBDRAFT": (
             "980__a",
             "925__b",
-            "%d %m %Y",
+            "%d %b %Y",
         )
     }
 else:
