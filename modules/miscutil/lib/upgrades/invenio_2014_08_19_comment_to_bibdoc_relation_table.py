@@ -17,8 +17,6 @@
 # along with Invenio; if not, write to the Free Software Foundation,
 # Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
-
-
 from invenio.dbquery import run_sql
 
 depends_on = ['invenio_release_1_1_0']
@@ -26,15 +24,14 @@ depends_on = ['invenio_release_1_1_0']
 
 def info():
     """Upgrader info."""
-    return "Create a new table to be used for associating comment ids and "
-           "their record ids with bibdocfile ids"
+    return ("Create a new table to be used for relating comment ids and "
+            "their record ids with bibdocfile ids")
 
 
 def do_upgrade():
     """Perform upgrade."""
-
     run_sql("""
-        CREATE TABLE IF NOT EXISTS `cmtRECORDCOMMENT_bibdocfile` (
+        CREATE TABLE IF NOT EXISTS `cmtRECORDCOMMENT_bibdoc` (
         `id_record` mediumint(8) unsigned NOT NULL,
         `id_comment` int(15) unsigned NOT NULL,
         `id_bibdoc` mediumint(9) unsigned NOT NULL,
@@ -57,6 +54,7 @@ def do_upgrade():
             REFERENCES `bibdocfsinfo` (`id_bibdoc`,`version`,`format`)
         ) ENGINE=MyISAM;
         """)
+
 
 def estimate():
     """  Estimate running time of upgrade in seconds (optional). """

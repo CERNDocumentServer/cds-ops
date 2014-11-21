@@ -43,7 +43,7 @@ from invenio.webcomment import check_recID_is_in_range, \
                                is_comment_deleted, \
                                perform_display_your_comments
 
-from invenio.webcomment_dblayer import get_cmtrecordcomment_to_bibdocfile_association
+from invenio.webcomment_dblayer import get_cmtrecordcomment_to_bibdocfile_relation
 
 from invenio.config import \
      CFG_TMPSHAREDDIR, \
@@ -87,26 +87,27 @@ webstyle_templates = invenio.template.load('webstyle')
 websearch_templates = invenio.template.load('websearch')
 import os
 from invenio import webinterface_handler_config as apache
-from invenio.bibdocfile import \
-     stream_file, \
-     decompose_file, \
-     propose_next_docname
+from invenio.bibdocfile import (
+    stream_file, decompose_file, propose_next_docname
+)
+
 
 class WebInterfaceCommentsPages(WebInterfaceDirectory):
     """Defines the set of /comments pages."""
 
     _exports = ['', 'display', 'add', 'vote', 'report', 'index', 'attachments',
-                'subscribe', 'unsubscribe', 'toggle', 'associated_files']
+                'subscribe', 'unsubscribe', 'toggle', 'related_files']
 
     def __init__(self, recid=-1, reviews=0):
         self.recid = recid
-        self.discussion = reviews # 0:comments, 1:reviews
+        # 0:comments, 1:reviews
+        self.discussion = reviews
         self.attachments = WebInterfaceCommentsFiles(recid, reviews)
 
-    def associated_files(self, req, form):
+    def related_files(self, req, form):
         """
-        Queries dblayer for all the files of the
-        record that have associated comments with them
+        Queries dblayer for all the files of the record that have related
+        comments with them.
         """
         argd = wash_urlargd(form, {'recid': (int, -1)})
 
@@ -117,10 +118,9 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
         (auth_code, auth_msg) = check_user_can_view_comments(user_info,
                                                              self.recid)
         if auth_code:
-            return page_not_authorized(req, "../", \
-                                       text = auth_msg)
+            return page_not_authorized(req, "../", text=auth_msg)
 
-        return get_cmtrecordcomment_to_bibdocfile_association(argd['recid'])
+        return get_cmtrecordcomment_to_bibdocfile_relation(argd['recid'])
 
     def index(self, req, form):
         """
@@ -162,7 +162,8 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
                                    'reported': (int, -1),
                                    'subscribed': (int, 0),
                                    'cmtgrp': (list, ["latest"]), # 'latest' is now a reserved group/round name
-                                   'filter' : (str, '')
+                                   'filter_text': (str, ''),
+                                   'filter_file': (str, '')
                                    })
 
         _ = gettext_set_language(argd['ln'])
@@ -255,7 +256,8 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
                 user_is_subscribed_to_discussion=user_is_subscribed_to_discussion,
                 user_can_unsubscribe_from_discussion=user_can_unsubscribe_from_discussion,
                 display_comment_rounds=display_comment_rounds,
-                filter_for_results=argd['filter']
+                filter_for_results=argd['filter_text'],
+                filter_for_file=argd['filter_file']
                 )
 
             title, description, keywords = websearch_templates.tmpl_record_page_header_content(req, self.recid, argd['ln'])
@@ -328,7 +330,7 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
                                    'editor_type': (str, ""),
                                    'subscribe': (str, ""),
                                    'cookie': (str, ""),
-                                   'associated_file': (str, "")
+                                   'related_file': (str, "")
                                    })
         _ = gettext_set_language(argd['ln'])
 
@@ -527,7 +529,7 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
                 req=req,
                 attached_files=added_files,
                 warnings=warning_msgs,
-                associated_file=argd['associated_file']
+                related_file=argd['related_file']
             )
 
             if self.discussion:
