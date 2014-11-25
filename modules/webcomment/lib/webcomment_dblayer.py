@@ -2,9 +2,9 @@ from invenio.dbquery import run_sql
 from invenio.bibdocfile import BibRecDocs
 import json
 
-def get_cmtrecordcomment_to_bibdocfile_association(recID):
+def get_cmtrecordcomment_to_bibdocfile_relation(recID):
     """
-    Retrieves all the associations between the comments of a record
+    Retrieves all the relations between the comments of a record
     and bibdocfiles they refer to.
     :param recID: Id of the record
     :return: correlations between comments and bibdocfiles
@@ -12,7 +12,7 @@ def get_cmtrecordcomment_to_bibdocfile_association(recID):
 
 
     query = """SELECT id_record, id_bibdoc, id_comment, version
-                   FROM cmtRECORDCOMMENT_bibdocfile
+                   FROM cmtRECORDCOMMENT_bibdoc
                    WHERE id_record = %s
                 """
     comments_to_bibdoc = run_sql(query, (recID,),  with_dict=True)
@@ -31,15 +31,15 @@ def get_cmtrecordcomment_to_bibdocfile_association(recID):
     return res
 
 
-def add_comment_to_file_association(redID, cmtID, bibdocfileID, version):
+def add_comment_to_file_relation(redID, cmtID, bibdocfileID, version):
     """
-    Adds an association of a comment to a bibdocfile
+    Adds an relation of a comment to a bibdocfile
     :param redID: Id of the record
     :param cmtID: Id of the comment
     :param bibdocfileID: Id of the bibdocfile
     """
 
-    query = """INSERT INTO cmtRECORDCOMMENT_bibdocfile
+    query = """INSERT INTO cmtRECORDCOMMENT_bibdoc
              (id_record, id_comment, id_bibdoc, version)
              VALUES (%s, %s, %s, %s)"""
     res = run_sql(query, (redID, cmtID, bibdocfileID, version))
@@ -48,7 +48,7 @@ def add_comment_to_file_association(redID, cmtID, bibdocfileID, version):
 
 def get_bibdocfiles_of_record(recID, only_used_p=False):
     """
-    Retrieves all bibdocfiles associated with a record
+    Retrieves all bibdocfiles related with a record
     :param recID: Id of the record
     :return: array of dictionaries with each dictionary representing a bibdocfile
             dictionary keys are
