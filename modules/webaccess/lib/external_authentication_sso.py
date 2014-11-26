@@ -69,6 +69,12 @@ CFG_EXTERNAL_AUTH_SSO_LOGIN_VARIABLE = CFG_EXTERNAL_AUTH_SSO_PREFIX_NAMES[0] + '
 CFG_EXTERNAL_AUTH_SSO_EMAIL_VARIABLE = CFG_EXTERNAL_AUTH_SSO_PREFIX_NAMES[0] + 'EMAIL'
 # Name of the variable containing groups
 CFG_EXTERNAL_AUTH_SSO_GROUP_VARIABLE = CFG_EXTERNAL_AUTH_SSO_PREFIX_NAMES[0] + 'GROUP'
+# Name of the variable containing federation
+CFG_EXTERNAL_AUTH_SSO_FEDERATION_VARIABLE = CFG_EXTERNAL_AUTH_SSO_PREFIX_NAMES[0] + 'FEDERATION'
+# Name of the variable containing fullname
+CFG_EXTERNAL_AUTH_SSO_FULLNAME_VARIABLE = CFG_EXTERNAL_AUTH_SSO_PREFIX_NAMES[0] + 'FULLNAME'
+# Name of the variable containing role
+CFG_EXTERNAL_AUTH_SSO_ROLE_VARIABLE= CFG_EXTERNAL_AUTH_SSO_PREFIX_NAMES[0] + 'ROLE'
 # Separator character for group variable
 CFG_EXTERNAL_AUTH_SSO_GROUPS_SEPARATOR = ';'
 
@@ -138,8 +144,20 @@ class ExternalAuthSSO(ExternalAuth):
         """
         if req:
             req.add_common_vars()
-            if req.subprocess_env.has_key(CFG_EXTERNAL_AUTH_SSO_LOGIN_VARIABLE):
-                return req.subprocess_env[CFG_EXTERNAL_AUTH_SSO_LOGIN_VARIABLE]
+            # Extract all neccessary adfs variables
+            federation = req.subprocess_env.get(CFG_EXTERNAL_AUTH_SSO_FEDERATION_VARIABLE)
+            fullname = req.subprocess_env.get(CFG_EXTERNAL_AUTH_SSO_FULLNAME_VARIABLE)
+            email = req.subprocess_env.get(CFG_EXTERNAL_AUTH_SSO_EMAIL_VARIABLE)
+            role = req.subprocess_env.get(CFG_EXTERNAL_AUTH_SSO_ROLE_VARIABLE)
+            if federation == "CERN" and role == "CERN Users":
+                nickname = fullname
+            else:
+                if fullname != email:
+                    nickname = fullname
+                else:
+                    local_part, domain_part = email.split("@", 1)
+                    nickname = "%s [%s]" % (local_part, " ".join(domain_part.split(".")[:-1]).upper())
+            return nickname
         else:
             return None
 

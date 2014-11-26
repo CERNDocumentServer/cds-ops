@@ -100,7 +100,7 @@ if CFG_CERN_SITE:
     CFG_EXTERNAL_AUTH_DEFAULT = CFG_EXTERNAL_AUTH_USING_SSO
     CFG_EXTERNAL_AUTH_LOGOUT_SSO = 'https://login.cern.ch/adfs/ls/?wa=wsignout1.0'
     CFG_EXTERNAL_AUTHENTICATION = {
-        CFG_EXTERNAL_AUTH_USING_SSO : ea_sso.ExternalAuthSSO(),
+        CFG_EXTERNAL_AUTH_USING_SSO : ea_sso.ExternalAuthSSO(enforce_external_nicknames=True),
     }
 elif CFG_OPENAIRE_SITE:
     CFG_EXTERNAL_AUTH_DEFAULT = 'Local'
