@@ -21,6 +21,30 @@
 
 __revision__ = "$Id$"
 
-from invenio.config import CFG_ETCDIR
+from invenio.config import CFG_ETCDIR, CFG_ELASTICSEARCH_LOGGING, CFG_CERN_SITE
 
 CFG_WEBSTAT_CONFIG_PATH = CFG_ETCDIR + "/webstat/webstat.cfg"
+
+if CFG_CERN_SITE:
+    CFG_ELASTICSEARCH_EVENTS_MAP = {
+        "events.loanrequest": {
+            "_source": {
+                "enabled": True
+            },
+            "properties": {
+                "request_id": {
+                    "type": "integer"
+                },
+                "load_id": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+else:
+    CFG_ELASTICSEARCH_EVENTS_MAP = {}
+
+if CFG_ELASTICSEARCH_LOGGING:
+    from invenio.elasticsearch_logging import register_schema
+    for name, arguments in CFG_ELASTICSEARCH_EVENTS_MAP.items():
+        register_schema(name, arguments)
