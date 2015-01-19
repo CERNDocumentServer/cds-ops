@@ -43,8 +43,3 @@ if CFG_CERN_SITE:
     }
 else:
     CFG_ELASTICSEARCH_EVENTS_MAP = {}
-
-if CFG_ELASTICSEARCH_LOGGING:
-    from invenio.elasticsearch_logging import register_schema
-    for name, arguments in CFG_ELASTICSEARCH_EVENTS_MAP.items():
-        register_schema(name, arguments)
