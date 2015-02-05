@@ -31,7 +31,9 @@ def do_upgrade():
     """Implement your upgrades here."""
     from invenio.config import SECRET_KEY
     from sqlalchemy_utils.types.encrypted import AesEngine
-    engine = AesEngine(SECRET_KEY)
+    engine = AesEngine()
+    engine._update_key(SECRET_KEY)
+
     for row in run_sql(
             "SELECT id, access_token, refresh_token FROM oauth2TOKEN"):
         run_sql(
@@ -44,6 +46,9 @@ def do_upgrade():
 
 def estimate():
     """Estimate running time of upgrade in seconds (optional)."""
-    return run_sql(
-        "SELECT COUNT(id) AS ids FROM oauth2TOKEN"
-    )[0][0]
+    try:
+        return run_sql(
+            "SELECT COUNT(id) AS ids FROM oauth2TOKEN"
+        )[0][0]
+    except:
+        return 1
