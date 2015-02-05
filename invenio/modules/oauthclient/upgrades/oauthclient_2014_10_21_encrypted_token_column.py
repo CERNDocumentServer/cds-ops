@@ -31,7 +31,8 @@ def do_upgrade():
     """Implement your upgrades here."""
     from invenio.config import SECRET_KEY
     from sqlalchemy_utils.types.encrypted import AesEngine
-    engine = AesEngine(SECRET_KEY)
+    engine = AesEngine()
+    engine._update_key(SECRET_KEY)
     for row in run_sql(
             "SELECT id_remote_account, token_type, access_token "
             "FROM remoteTOKEN"):
@@ -43,6 +44,9 @@ def do_upgrade():
 
 def estimate():
     """Estimate running time of upgrade in seconds (optional)."""
-    return run_sql(
-        "SELECT COUNT(*) AS ids FROM remoteTOKEN"
-    )[0][0]
+    try:
+        return run_sql(
+            "SELECT COUNT(*) AS ids FROM remoteTOKEN"
+        )[0][0]
+    except:
+        return 1
