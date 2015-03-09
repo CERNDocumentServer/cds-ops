@@ -372,6 +372,12 @@ def task_run_core():
                         'matching': task_get_option('matching', '')}
         recids += query_records(query_params)
 
+        if task_has_option("only_missing"):
+            # From all the recIDs that we have collected so far, we want to
+            # reformat only those that don't have cache
+            without_fmt = missing_caches(fmt)
+            recids = recids.intersection(without_fmt)
+
         bibreformat_task(fmt,
                          recids,
                          without_fmt,
@@ -429,6 +435,7 @@ Reformatting options:
   -p,  --pattern        \t Force reformatting records by pattern
   -i,  --id             \t Force reformatting records by record id(s)
   --no-missing          \t Ignore reformatting records without format
+  --only-missing        \t Reformatting only the records without formats
 Pattern options:
   -m,  --matching       \t Specify if pattern is exact (e), regular expression (r),
                         \t partial (p), any of the words (o) or all of the words (a)
@@ -443,6 +450,7 @@ Pattern options:
                                 "format=",
                                 "noprocess",
                                 "id=",
+                                "only-missing",
                                 "no-missing"]),
               task_submit_check_options_fnc=task_submit_check_options,
               task_submit_elaborate_specific_parameter_fnc=
@@ -471,6 +479,8 @@ def task_submit_elaborate_specific_parameter(key, value, opts, args):  # pylint:
         task_set_option("all", 1)
     elif key in ("--no-missing", ):
         task_set_option("ignore_without", 1)
+    elif key in ("--only-missing", ):
+        task_set_option("only_missing", 1)
     elif key in ("-c", "--collection"):
         task_set_option("collection", value)
     elif key in ("-n", "--noprocess"):
