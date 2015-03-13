@@ -17,13 +17,11 @@
 # along with Invenio; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
-"""
-    invenio.modules.documents.config
-    --------------------------------
+"""Configuration options for documents."""
 
-    Defines configuration options for documents.
-"""
-from invenio.base import config
+from werkzeug.local import LocalProxy
+
+from invenio.base.globals import cfg
 
 DOCUMENTS_ENGINE = ('invenio.modules.jsonalchemy.jsonext.engines.sqlalchemy'
                     ':SQLAlchemyStorage')
@@ -36,5 +34,5 @@ DOCUMENTS_MONGODBSTORAGE = {
     'model': 'Document',
     'host': "localhost",
     'port': 27017,
-    'database': config.CFG_DATABASE_NAME,
+    'database': LocalProxy(lambda: cfg['CFG_DATABASE_NAME']),
 }

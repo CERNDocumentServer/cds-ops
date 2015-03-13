@@ -34,7 +34,7 @@ class MongoDBStorage(Storage):
         self.model = model
         host = kwards.get('host', 'localhost')
         port = kwards.get('port', 27017)
-        database = kwards.get('database', 'invenio')
+        database = kwards.get('database', 'invenio').encode('utf-8')
         self.__connection = pymongo.MongoClient(host=host, port=port)
         self.__database = self.__connection[database]
         self.__collection = self.__database[model]
