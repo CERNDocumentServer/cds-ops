@@ -23,6 +23,7 @@ __lastupdated__ = """$Date$"""
 import cgi
 import os
 import datetime
+import json
 import time
 import sys
 from urllib import quote
@@ -40,6 +41,7 @@ if sys.hexversion < 0x2040000:
     # pylint: enable=W0622
 
 from invenio.config import \
+     CFG_ACCESS_CONTROL_LEVEL_SITE, \
      CFG_SITE_URL, \
      CFG_SITE_NAME, \
      CFG_CACHEDIR, \
@@ -58,7 +60,6 @@ from invenio.config import \
      CFG_INSPIRE_SITE, \
      CFG_WEBSEARCH_WILDCARD_LIMIT, \
      CFG_SITE_RECORD, \
-     CFG_ACCESS_CONTROL_LEVEL_SITE, \
      CFG_SITE_NAME_INTL
 
 from invenio.dbquery import Error
@@ -114,7 +115,7 @@ from invenio.bibfield import get_record
 from invenio.shellutils import mymkdir
 from invenio.websearch_yoursearches import perform_request_yoursearches_display
 from invenio.webstat import register_customevent
-from invenio.obelixutils import obelix, clean_user_info
+from invenio.obelixutils import obelix, clean_user_info, get_recommended_records
 
 import invenio.template
 websearch_templates = invenio.template.load('websearch')
@@ -207,7 +208,8 @@ class WebInterfaceRecordPages(WebInterfaceDirectory):
 
     _exports = ['', 'files', 'reviews', 'comments', 'usage', 'references',
                 'export', 'citations', 'holdings', 'edit', 'keywords',
-                'multiedit', 'merge', 'plots', 'linkbacks', 'hepdata']
+                'multiedit', 'merge', 'plots', 'linkbacks', 'hepdata',
+                'recommendations']
 
     #_exports.extend(output_formats)
 
@@ -230,6 +232,7 @@ class WebInterfaceRecordPages(WebInterfaceDirectory):
         self.edit = WebInterfaceEditPages(self.recid)
         self.merge = WebInterfaceMergePages(self.recid)
         self.linkbacks = WebInterfaceRecordLinkbacksPages(self.recid)
+        self.recommendations = WebInterfaceRecordRecommendations(self.recid)
 
         return
 
@@ -318,6 +321,40 @@ class WebInterfaceRecordPages(WebInterfaceDirectory):
 
     # Return the same page wether we ask for /CFG_SITE_RECORD/123 or /CFG_SITE_RECORD/123/
     index = __call__
+
+
+class WebInterfaceRecordRecommendations(WebInterfaceDirectory):
+    """Handling of a /CFG_SITE_RECORD/<recid>/recommendations URL fragment."""
+
+    _exports = ['']
+
+    def __init__(self, recid):
+        self.recid = recid
+
+    def __call__(self, req, form):
+        """Called in case of URLs like /CFG_SITE_RECORD/123/recommendations."""
+        req.content_type = 'application/json'
+
+        user_info = collect_user_info(req)
+        uid = user_info['uid']
+
+        if uid == -1 or CFG_ACCESS_CONTROL_LEVEL_SITE > 1:
+            return {'stat': 'fail', "code": 1, "message": "Not authorized"}
+
+        (auth_code, auth_message) = check_user_can_view_record(user_info,
+                                                               self.recid)
+        if auth_code > 0:
+            # Not authorized
+            return {'stat': 'fail', "code": 1, "message": "Not authorized"}
+
+        result = {}
+        result['items'] = get_recommended_records(self.recid, uid,
+                collection="", threshold=55, maximum=3, shuffle=False)
+        result['loggedin'] = True if uid > 0 else False
+        result['stat'] = 'ok'
+
+        return json.dumps(result)
+
 
 class WebInterfaceRecordRestrictedPages(WebInterfaceDirectory):
     """ Handling of a /record-restricted/<recid> URL fragment """
@@ -729,7 +766,7 @@ class WebInterfaceSearchInterfacePages(WebInterfaceDirectory):
                 if path[1] in ['', 'files', 'reviews', 'comments', 'usage',
                                'references', 'citations', 'holdings', 'edit',
                                'keywords', 'multiedit', 'merge', 'plots',
-                               'linkbacks', 'hepdata']:
+                               'linkbacks', 'hepdata', 'recommendations']:
                     tab = path[1]
                 elif path[1] == 'export':
                     tab = ''
