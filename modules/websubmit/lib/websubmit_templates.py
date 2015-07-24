@@ -3154,7 +3154,7 @@ if (typeof datum === "undefined") {
     }
 
     function dispkey(suggestion_object) {
-        var name = (suggestion_object["firstname"] === undefined) ? suggestion_object["name"] : suggestion_object["firstname"] + ", " + suggestion_object["lastname"];
+        var name = (suggestion_object["firstname"] === undefined) ? suggestion_object["name"] : suggestion_object["lastname"] + ", " + suggestion_object["firstname"];
         var affiliation = (suggestion_object["affiliation"] === undefined) ? "" : ": " + suggestion_object["affiliation"];
         return name + affiliation;
     }
