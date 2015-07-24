@@ -132,7 +132,6 @@ import invenio.template
 
 if CFG_ELASTICSEARCH_LOGGING:
     import logging
-
     _DOWNLOAD_LOG = logging.getLogger('events.downloads')
 
 def _plugin_bldr(dummy, plugin_code):

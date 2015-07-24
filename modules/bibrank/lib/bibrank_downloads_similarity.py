@@ -31,7 +31,6 @@ from invenio.search_engine_utils import get_fieldvalues
 
 if CFG_ELASTICSEARCH_LOGGING:
     import logging
-
     _PAGEVIEW_LOG = logging.getLogger('events.pageviews')
 
 def record_exists(recID):
