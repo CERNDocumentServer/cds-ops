@@ -19,6 +19,7 @@
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 """ Comments and reviews for records: web interface """
+from docutils.nodes import note
 
 __lastupdated__ = """$Date$"""
 
@@ -85,20 +86,31 @@ webstyle_templates = invenio.template.load('webstyle')
 websearch_templates = invenio.template.load('websearch')
 import os
 from invenio import webinterface_handler_config as apache
-from invenio.bibdocfile import \
-     stream_file, \
-     decompose_file, \
-     propose_next_docname
+from invenio.bibdocfile import (
+    stream_file, decompose_file, propose_next_docname
+)
+
 
 class WebInterfaceCommentsPages(WebInterfaceDirectory):
     """Defines the set of /comments pages."""
 
-    _exports = ['', 'display', 'add', 'vote', 'report', 'index', 'attachments',
-                'subscribe', 'unsubscribe', 'toggle']
+    _exports = [
+        '',
+        'display',
+        'add',
+        'vote',
+        'report',
+        'index',
+        'attachments',
+        'subscribe',
+        'unsubscribe',
+        'toggle',
+    ]
 
     def __init__(self, recid=-1, reviews=0):
         self.recid = recid
-        self.discussion = reviews # 0:comments, 1:reviews
+        # 0:comments, 1:reviews
+        self.discussion = reviews
         self.attachments = WebInterfaceCommentsFiles(recid, reviews)
 
     def index(self, req, form):
@@ -140,7 +152,10 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
                                    'voted': (int, -1),
                                    'reported': (int, -1),
                                    'subscribed': (int, 0),
-                                   'cmtgrp': (list, ["latest"]) # 'latest' is now a reserved group/round name
+                                   'cmtgrp': (list, ["latest"]), # 'latest' is now a reserved group/round name
+                                   'filter_text': (str, ''),
+                                   'filter_file': (str, ''),
+                                   'relate_file': (str, '')
                                    })
 
         _ = gettext_set_language(argd['ln'])
@@ -217,7 +232,9 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
 
         (ok, problem) = check_recID_is_in_range(self.recid, check_warnings, argd['ln'])
         if ok:
-            body = perform_request_display_comments_or_remarks(req=req, recID=self.recid,
+            body = perform_request_display_comments_or_remarks(
+                req=req,
+                recID=self.recid,
                 display_order=argd['do'],
                 display_since=argd['ds'],
                 nb_per_page=argd['nb'],
@@ -232,7 +249,10 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
                 can_attach_files=can_attach_files,
                 user_is_subscribed_to_discussion=user_is_subscribed_to_discussion,
                 user_can_unsubscribe_from_discussion=user_can_unsubscribe_from_discussion,
-                display_comment_rounds=display_comment_rounds
+                display_comment_rounds=display_comment_rounds,
+                filter_for_text=argd['filter_text'],
+                filter_for_file=argd['filter_file'],
+                relate_to_file=argd['relate_file']
                 )
 
             title, description, keywords = websearch_templates.tmpl_record_page_header_content(req, self.recid, argd['ln'])
@@ -297,15 +317,21 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
                           this discussion
         @return the full html page.
         """
-        argd = wash_urlargd(form, {'action': (str, "DISPLAY"),
-                                   'msg': (str, ""),
-                                   'note': (str, ''),
-                                   'score': (int, 0),
-                                   'comid': (int, 0),
-                                   'editor_type': (str, ""),
-                                   'subscribe': (str, ""),
-                                   'cookie': (str, "")
-                                   })
+        argd = wash_urlargd(
+            form,
+            {
+                'action': (str, "DISPLAY"),
+                'msg': (str, ""),
+                'note': (str, ''),
+                'score': (int, 0),
+                'comid': (int, 0),
+                'editor_type': (str, ""),
+                'subscribe': (str, ""),
+                'cookie': (str, ""),
+                'relate_file': (str, ""),
+                'extra_checkbox': (str, ""),
+            }
+        )
         _ = gettext_set_language(argd['ln'])
 
         actions = ['DISPLAY', 'REPLY', 'SUBMIT']
@@ -486,22 +512,29 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
                 # User is not already subscribed, and asked to subscribe
                 subscribe = True
 
-            body = perform_request_add_comment_or_remark(recID=self.recid,
-                                                         ln=argd['ln'],
-                                                         uid=uid,
-                                                         action=argd['action'],
-                                                         msg=argd['msg'],
-                                                         note=argd['note'],
-                                                         score=argd['score'],
-                                                         reviews=self.discussion,
-                                                         comID=argd['comid'],
-                                                         client_ip_address=client_ip_address,
-                                                         editor_type=argd['editor_type'],
-                                                         can_attach_files=can_attach_files,
-                                                         subscribe=subscribe,
-                                                         req=req,
-                                                         attached_files=added_files,
-                                                         warnings=warning_msgs)
+            note = argd['note']
+            if argd['extra_checkbox']:
+                note = argd['extra_checkbox']
+
+            body = perform_request_add_comment_or_remark(
+                recID=self.recid,
+                ln=argd['ln'],
+                uid=uid,
+                action=argd['action'],
+                msg=argd['msg'],
+                note=note,
+                score=argd['score'],
+                reviews=self.discussion,
+                comID=argd['comid'],
+                client_ip_address=client_ip_address,
+                editor_type=argd['editor_type'],
+                can_attach_files=can_attach_files,
+                subscribe=subscribe,
+                req=req,
+                attached_files=added_files,
+                warnings=warning_msgs,
+                relate_file=argd['relate_file']
+            )
 
             if self.discussion:
                 title = _("Add Review")
@@ -737,9 +770,10 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
         """
         Store the visibility of a comment for current user
         """
-        argd = wash_urlargd(form, {'comid': (int, -1),
+        argd = wash_urlargd(form, {'comid': (str, ""),
                                    'referer': (str, None),
-                                   'collapse': (int, 1)})
+                                   'collapse': (int, 1),
+                                   'force': (int, 0)})
 
         uid = getUid(req)
 
@@ -747,11 +781,12 @@ class WebInterfaceCommentsPages(WebInterfaceDirectory):
             # We do not store information for guests
             return ''
 
-        toggle_comment_visibility(uid, argd['comid'], argd['collapse'], self.recid)
+        toggle_comment_visibility(uid, argd['comid'], argd['collapse'], self.recid, argd.get('force'))
         if argd['referer']:
             return redirect_to_url(req, CFG_SITE_SECURE_URL + \
                                    (not argd['referer'].startswith('/') and '/' or '') + \
                                    argd['referer'] + '#' + str(argd['comid']))
+        return "ok"
 
 class WebInterfaceCommentsFiles(WebInterfaceDirectory):
     """Handle <strike>upload and </strike> access to files for comments.

@@ -3870,6 +3870,7 @@ CREATE TABLE IF NOT EXISTS cmtRECORDCOMMENT (
   id_user int(15) unsigned NOT NULL default '0',
   title varchar(255) NOT NULL default '',
   body text NOT NULL default '',
+  body_format varchar(10) NOT NULL default 'TXT',
   date_creation datetime NOT NULL default '0000-00-00 00:00:00',
   star_score tinyint(5) unsigned NOT NULL default '0',
   nb_votes_yes int(10) NOT NULL default '0',
@@ -3913,6 +3914,16 @@ CREATE TABLE IF NOT EXISTS cmtCOLLAPSED (
   id_cmtRECORDCOMMENT int(15) unsigned NULL,
   id_user int(15) unsigned NOT NULL,
   PRIMARY KEY (id_user, id_bibrec, id_cmtRECORDCOMMENT)
+) ENGINE=MyISAM;
+
+CREATE TABLE IF NOT EXISTS `cmtRECORDCOMMENT_bibdoc` (
+  `id_bibrec` mediumint(8) unsigned NOT NULL,
+  `id_cmtRECORDCOMMENT` int(15) unsigned NOT NULL,
+  `id_bibdoc` mediumint(9) unsigned NOT NULL,
+  `version` tinyint(4) unsigned NOT NULL,
+  PRIMARY KEY (`id_bibrec`,`id_cmtRECORDCOMMENT`),
+  KEY `id_cmtRECORDCOMMENT` (`id_cmtRECORDCOMMENT`),
+  KEY `id_bibdoc` (`id_bibdoc`)
 ) ENGINE=MyISAM;
 
 -- tables for BibKnowledge:

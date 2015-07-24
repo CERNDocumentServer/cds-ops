@@ -327,6 +327,7 @@ img_DATA = add-small.png \
            yahoo_icon_48.png \
            yammer_icon_24.png \
            yammer_icon_48.png \
+           filter_filled.png \
            sign_in_with_google.png \
            youtube-logo-icon-24px.png
 
