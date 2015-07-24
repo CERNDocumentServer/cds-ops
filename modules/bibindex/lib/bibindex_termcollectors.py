@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2014 CERN.
+# Copyright (C) 2014, 2015 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -158,6 +158,8 @@ class TermCollector(object):
             for recID in recIDs:
                 control_nos = get_fieldvalues(recID, authority_tag)
                 for control_no in control_nos:
+                    if not control_no:
+                        continue
                     new_strings = get_index_strings_by_control_no(control_no)
                     for string_value in new_strings:
                         phrases.add((recID, string_value))
