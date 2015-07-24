@@ -311,6 +311,7 @@ except:
     WebInterfaceAuthorlistPages = WebInterfaceDumbPages
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 if CFG_CERN_SITE:
     try:
         from invenio.aleph_webinterface import WebInterfaceAlephPages
@@ -357,6 +358,13 @@ try:
 except:
     register_exception(alert_admin=True, subject='EMERGENCY')
     WebInterfaceYoutube = WebInterfaceDumbPages
+
+try:
+    from invenio.webnews_webinterface import WebInterfaceWebNewsPages
+except:
+    register_exception(alert_admin=True, subject='EMERGENCY')
+    WebInterfaceWebNewsPages = WebInterfaceDumbPages
+
 
 if CFG_OPENAIRE_SITE:
     try:
@@ -428,7 +436,9 @@ class WebInterfaceInvenio(WebInterfaceSearchInterfacePages):
                    'info',
                    'authorlist',
                    'youtube',
+                   'news',
                ] + test_exports + openaire_exports + cds_exports
+               ] + test_exports + openaire_exports
 
     def __init__(self):
         self.getfile = bibdocfile_legacy_getfile
@@ -471,6 +481,7 @@ class WebInterfaceInvenio(WebInterfaceSearchInterfacePages):
         goto = WebInterfaceDisabledPages()
         authorlist = WebInterfaceDisabledPages()
         youtube = WebInterfaceYoutube()
+        news = WebInterfaceDisabledPages()
         if CFG_CERN_SITE:
             cdslib = WebInterfaceDisabledPages()
             setlink = WebInterfaceDisabledPages()
@@ -511,6 +522,7 @@ class WebInterfaceInvenio(WebInterfaceSearchInterfacePages):
         yourcomments = WebInterfaceYourCommentsPages()
         goto = WebInterfaceGotoPages()
         authorlist = WebInterfaceAuthorlistPages()
+        news = WebInterfaceWebNewsPages()
         youtube = WebInterfaceYoutube()
         if CFG_CERN_SITE:
             cdslib = WebInterfaceAlephPages()
