@@ -102,7 +102,8 @@ pylib_DATA = __init__.py \
 	bfe_webauthorpage_affiliations.py \
 	bfe_webauthorpage_data.py \
 	bfe_xml_record.py \
-	bfe_year.py
+	bfe_year.py \
+	bfe_youtube_authorization.py
 
 
 tmpdir = $(prefix)/var/tmp/tests_bibformat_elements

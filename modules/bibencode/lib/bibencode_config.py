@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2011 CERN.
+# Copyright (C) 2011, 2015 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -233,3 +233,26 @@ CFG_BIBENCODE_DAEMON_DIR_OLDJOBS = invenio.config.CFG_TMPSHAREDDIR + '/bibencode
 
 CFG_BIBENCODE_WEBSUBMIT_ASPECT_SAMPLE_FNAME = 'aspect_sample_.jpg'
 CFG_BIBENCODE_WEBSUBMIT_ASPECT_SAMPLE_DIR = 'aspect_samples'
+
+#---------#
+# Youtube #
+#---------#
+
+CFG_BIBENCODE_YOUTUBE_VIDEO_SIZE = ('mp40600', 'mp42672', 'mp40900', 'mp42800', 'mp40900', 'MP4_1280x720_1700kb', 'MP4_640x480_450kb') if invenio.config.CFG_CERN_SITE else ('master', )
+CFG_BIBENCODE_YOUTUBE_VIDEO_SIZE_SUBFIELD = '7' if invenio.config.CFG_CERN_SITE else '4'
+CFG_BIBENCODE_YOUTUBE_USER_ROLE = 'PushToYoutube' if invenio.config.CFG_CERN_SITE else 'PushToYoutube'
+CFG_BIBENCODE_YOUTUBE_CATEGORIES_API_KEY = 'AIzaSyDdWdEdOGFVh-TuAN0Hhtmup1u2Va8F2_o'
+CFG_BIBENCODE_YOUTUBE_MIME_TYPES = {
+    'mpg'  : 'video/mpeg',
+    'mpeg' : 'video/mpeg',
+    'mpe'  : 'video/mpeg',
+    'mpga' : 'video/mpeg',
+    'mp4'  : 'video/mp4',
+    'ogg'  : 'appication/ogg',
+    'webm' : 'video/webm',
+    'MPG'  : 'video/mpeg',
+    'mov'  : 'video/quicktime',
+    'wmv'  : 'video/x-ms-wmv',
+    'flv'  : 'video/x-flv',
+    '3gp'  : 'video/3gpp'
+}

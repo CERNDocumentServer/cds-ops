@@ -28,7 +28,8 @@ pylib_DATA = bibencode.py \
              bibencode_batch_engine.py \
              bibencode_websubmit.py \
              bibencode_tester.py \
-             bibencode_websubmit.js
+             bibencode_websubmit.js \
+             bibencode_youtube.py
 
 EXTRA_DIST = $(pylib_DATA)
 

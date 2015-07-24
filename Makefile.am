@@ -324,6 +324,38 @@ uninstall-pdfa-helper-files:
 	@echo "** The PDF/A helper files were successfully uninstalled. **"
 	@echo "***********************************************************"
 
+install-youtube:
+	@echo "***********************************************************"
+	@echo "**        Installing youtube client libraries            **"
+	@echo "***********************************************************"
+	@echo "Please make sure that you have pip installed             **"
+	@echo "-----------------------------------------------------------"
+	@echo "For more infos about the library please visit:"
+	@echo "https://developers.google.com/api-client-library/python/start/installation"
+	sudo pip install --upgrade google-api-python-client
+	rm -rf /tmp/invenio_js_frameworks
+	mkdir -p /tmp/invenio_js_frameworks
+	(cd /tmp/invenio_js_frameworks && \
+	wget https://github.com/dimsemenov/Magnific-Popup/archive/master.zip && \
+	unzip master.zip && \
+	mkdir -p ${prefix}/var/www/static/magnific_popup && \
+	cp -r Magnific-Popup-master/dist/* ${prefix}/var/www/static/magnific_popup && \
+	cd /tmp && \
+	rm -rf invenio_js_frameworks)
+	@echo "***********************************************************"
+	@echo "**  Youtube client libraries was successfully installed  **"
+	@echo "***********************************************************"
+
+unistall-youtube:
+	@echo "***********************************************************"
+	@echo "**       Unistalling Youtube client libraries            **"
+	@echo "***********************************************************"
+	sudo pip uninstall google-api-python-client
+	rm -rf ${prefix}/var/www/static/magnific_popup
+	@echo "***********************************************************"
+	@echo "** Youtube client libraries was successfully unistalled  **"
+	@echo "***********************************************************"
+
 #Solrutils allows automatic installation, running and searching of an external Solr index.
 install-solrutils:
 	@echo "***********************************************************"
