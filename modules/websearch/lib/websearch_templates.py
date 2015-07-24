@@ -27,7 +27,9 @@ import string
 import re
 import locale
 from urllib import quote, urlencode
+from urlparse import parse_qs
 from xml.sax.saxutils import escape as xml_escape
+from datetime import date as datetime_date
 
 from invenio.config import \
      CFG_WEBSEARCH_LIGHTSEARCH_PATTERN_BOX_WIDTH, \
@@ -66,6 +68,7 @@ from invenio.config import \
      CFG_HEPDATA_PLOTSIZE, \
      CFG_BASE_URL, \
      CFG_SITE_URL, \
+     CFG_SITE_SECURE_URL, \
      CFG_WEBSEARCH_PREV_NEXT_HIT_FOR_GUESTS
 
 from invenio.search_engine_config import CFG_WEBSEARCH_RESULTS_OVERVIEW_MAX_COLLS_TO_PRINT
@@ -80,9 +83,7 @@ from invenio.htmlutils import nmtoken_from_string
 from invenio.webinterface_handler import wash_urlargd
 from invenio.bibrank_citation_searcher import get_cited_by_count
 from invenio.webuser import session_param_get
-
 from invenio.intbitset import intbitset
-
 from invenio.websearch_external_collections import external_collection_get_state, get_external_collection_engine
 from invenio.websearch_external_collections_utils import get_collection_id
 from invenio.websearch_external_collections_config import CFG_EXTERNAL_COLLECTION_MAXRESULTS
@@ -91,6 +92,8 @@ from invenio.bibformat import format_record
 from invenio.search_engine_utils import record_exists
 
 from invenio import hepdatadisplayutils
+
+from invenio.dateutils import convert_datetext_to_datestruct
 
 _RE_PUNCTUATION = re.compile(CFG_BIBINDEX_CHARS_PUNCTUATION)
 _RE_SPACES = re.compile(r"\s+")
@@ -5104,3 +5107,344 @@ class Template:
             if default_values:
                 default_args[item] = default_values[1]
         return default_args
+
+    def tmpl_yoursearches_display(self,
+                                  nb_queries_total,
+                                  nb_queries_distinct,
+                                  search_queries,
+                                  page,
+                                  step,
+                                  paging_navigation,
+                                  p,
+                                  ln=CFG_SITE_LANG):
+        """
+        Template for the display the user's search history.
+
+        @param ln: The language to display the interface in
+        @type ln: string
+
+        @param nb_queries_total: The number of the total user search queries
+        @type nb_queries_total: integer
+
+        @param nb_queries_total: The number of the distinct user search queries
+        @type nb_queries_total: integer
+
+        @param search_queries: The actual user search queries
+        @type search_queries: dictionary
+            - 'id' *string* - The id of the associated query
+            - 'args' *string* - The query string
+            - 'lastrun' *string* - The last running date
+
+        @param page: The number of the page the user is on
+        @type page: integer
+        
+        @param step: The number of searches to display per page
+        @type step: integer
+
+        @param paging_navigation: Four element tuple containing the display
+            information about the paging navigation arrows
+        @type paging navigation: tuple
+
+        @param p: Pattern for searching inside the user searches
+        @type p: string
+
+        @param guest: Whether the user is a guest or not
+        @type guest: boolean
+        """
+
+        # Load the right language
+        _ = gettext_set_language(ln)
+
+        # In case the user has not yet performed any searches display only the
+        # following message
+        if not search_queries:
+            if p:
+                msg = _("You have not searched for anything yet including the terms %(p)s. You may perform that %(x_url_open)ssearch%(x_url_close)s for the first time now.") % \
+                    {'p': '<strong>' + cgi.escape(p) + '</strong>',
+                     'x_url_open': '<a href="' + CFG_SITE_SECURE_URL + '/search?ln=' + ln + '&amp;p=' + cgi.escape(p) + '">',
+                     'x_url_close': '</a>'}
+            else:
+                msg = _("You have not searched for anything yet. You may want to start by the %(x_url_open)ssearch interface%(x_url_close)s first.") % \
+                    {'x_url_open': '<a href="' + CFG_SITE_SECURE_URL + '/?ln=' + ln +'">',
+                     'x_url_close': '</a>'}
+            out = '<p>' + msg + '</p>'
+            return out
+
+        # Diplay a message about the number of searches.
+        if p:
+            msg = _("You have performed %(searches_distinct)s unique searches including the term %(p)s.") % \
+                {'searches_distinct': '<strong>' + str(nb_queries_distinct) + '</strong>',
+                 'p': '<strong>' + cgi.escape(p) + '</strong>'}
+        else:
+            msg = _("You have performed %(searches_distinct)s unique searches.") % \
+                {'searches_distinct': '<strong>' + str(nb_queries_distinct) + '</strong>',}
+        out = '<p>' + msg + '</p>'
+
+        # Search form
+        search_form = """
+        <form name="yoursearches_search" action="%(action)s" method="get">
+          <small><strong>%(search_text)s</strong></small>
+          <input name="p" value="%(p)s" type="text" />
+          <input class="formbutton" type="submit" value="%(submit_label)s" />
+        </form>
+        """ % {'search_text': _('Search inside all your searches for'),
+               'action': '%s/yoursearches/display?ln=%s' % (CFG_SITE_SECURE_URL, ln),
+               'p': cgi.escape(p),
+               'submit_label': _('Search')}
+        out += '<p>' + search_form + '</p>'
+
+        counter = (page - 1) * step
+        yoursearches = ""
+        for search_query in search_queries:
+            counter += 1
+            search_query_args = search_query['args']
+            search_query_id = search_query['id']
+            search_query_lastrun = search_query['lastrun']
+            search_query_number_of_user_alerts = search_query['user_alerts']
+
+            search_query_details = get_html_user_friendly_search_query_args(search_query_args, ln)
+
+            search_query_last_performed = get_html_user_friendly_date_from_datetext(search_query_lastrun, ln)
+
+            search_query_options_search = """<a href="%s/search?%s"><img src="%s/img/yoursearches_search.png" />%s</a>""" % \
+                                          (CFG_SITE_SECURE_URL, cgi.escape(search_query_args), CFG_SITE_URL, _('Search again'))
+
+            search_query_options_alert = search_query_number_of_user_alerts and \
+                """<a href="%s/youralerts/display?ln=%s&amp;idq=%i"><img src="%s/img/yoursearches_alert_edit.png" />%s</a>""" % \
+                (CFG_SITE_SECURE_URL, ln, search_query_id, CFG_SITE_URL, _('Edit your existing alerts')) + \
+                '&nbsp;<strong>&middot;</strong>&nbsp;' + \
+                """<a href="%s/youralerts/input?ln=%s&amp;idq=%i"><img src="%s/img/yoursearches_alert.png" />%s</a>""" % \
+                (CFG_SITE_SECURE_URL, ln, search_query_id, CFG_SITE_URL, _('Set up as a new alert')) or \
+                """<a href="%s/youralerts/input?ln=%s&amp;idq=%i"><img src="%s/img/yoursearches_alert.png" />%s</a>""" % \
+                (CFG_SITE_SECURE_URL, ln, search_query_id, CFG_SITE_URL, _('Set up as a new alert'))
+
+            search_query_options = "%s&nbsp;<strong>&middot;</strong>&nbsp;%s" % \
+                                   (search_query_options_search, \
+                                    search_query_options_alert)
+
+            yoursearches += """
+    <tr>
+      <td class="websearch_yoursearches_table_counter">
+        %(counter)i.
+      </td>
+      <td class="websearch_yoursearches_table_content" onMouseOver='this.className="websearch_yoursearches_table_content_mouseover"' onMouseOut='this.className="websearch_yoursearches_table_content"'>
+        <div>%(search_query_details)s</div>
+        <div class="websearch_yoursearches_table_content_dates">%(search_query_last_performed)s</div>
+        <div class="websearch_yoursearches_table_content_options">%(search_query_options)s</div>
+      </td>
+    </tr>""" % {'counter': counter,
+                'search_query_details': search_query_details,
+                'search_query_last_performed': search_query_last_performed,
+                'search_query_options': search_query_options}
+
+        paging_navigation_html = ''
+        if paging_navigation[0]:
+            paging_navigation_html += """<a href="%s/yoursearches/display?page=%i&amp;step=%i&amp;p=%s&amp;ln=%s"><img src="%s" /></a>""" % \
+                      (CFG_SITE_SECURE_URL, 1, step, cgi.escape(p), ln, '/img/sb.gif')
+        if paging_navigation[1]:
+            paging_navigation_html += """<a href="%s/yoursearches/display?page=%i&amp;step=%i&amp;p=%s&amp;ln=%s"><img src="%s" /></a>""" % \
+                      (CFG_SITE_SECURE_URL, page - 1, step, cgi.escape(p), ln, '/img/sp.gif')
+        paging_navigation_html += "&nbsp;"
+        displayed_searches_from = ((page - 1) * step) + 1
+        displayed_searches_to = paging_navigation[2] and (page * step) or nb_queries_distinct
+        paging_navigation_html += _('Displaying searches <strong>%i to %i</strong> from <strong>%i</strong> total unique searches') % \
+               (displayed_searches_from, displayed_searches_to, nb_queries_distinct)
+        paging_navigation_html += "&nbsp;"
+        if paging_navigation[2]:
+            paging_navigation_html += """<a href="%s/yoursearches/display?page=%i&amp;step=%i&amp;p=%s&amp;ln=%s"><img src="%s" /></a>""" % \
+                      (CFG_SITE_SECURE_URL, page + 1, step, cgi.escape(p), ln, '/img/sn.gif')
+        if paging_navigation[3]:
+            paging_navigation_html += """<a href="%s/yoursearches/display?page=%i&amp;step=%i&amp;p=%s&amp;ln=%s"><img src="%s" /></a>""" % \
+                      (CFG_SITE_SECURE_URL, paging_navigation[3], step, cgi.escape(p), ln, '/img/se.gif')
+
+        out += """
+<table class="websearch_yoursearches_table" cellspacing="0px">
+  <thead class="websearch_yoursearches_table_header">
+    <tr>
+      <td colspan="2">%(paging_navigation_html)s</td>
+    </tr>
+  </thead>
+  <tfoot class="websearch_yoursearches_table_footer">
+    <tr>
+      <td colspan="2">%(paging_navigation_html)s</td>
+    </tr>
+  </tfoot>
+  <tbody>
+    %(yoursearches)s
+  </tbody>
+</table>""" % {'paging_navigation_html': paging_navigation_html,
+               'yoursearches': yoursearches}
+
+        return out
+
+    def tmpl_account_user_searches(self, unique, total, ln = CFG_SITE_LANG):
+        """
+        Information on the user's searches for the "Your Account" page
+        """
+
+        _ = gettext_set_language(ln)
+
+        if unique > 0:
+            out = _("You have performed %(x_url_open)s%(x_unique)s unique searches%(x_url_close)s.") % \
+                  {'x_url_open'  : '<strong><a href="%s/yoursearches/display?ln=%s">' % (CFG_SITE_SECURE_URL, ln),
+                   'x_unique'      : str(unique),
+                   'x_url_close' : '</a></strong>',}
+        else:
+            out = _("You have not searched for anything yet. You may want to start by the %(x_url_open)ssearch interface%(x_url_close)s first.") % \
+                  {'x_url_open'  : '<a href="%s/?ln=%s">' % (CFG_SITE_SECURE_URL, ln),
+                   'x_url_close' : '</a>'}
+
+        return out
+
+def get_html_user_friendly_search_query_args(args,
+                                             ln=CFG_SITE_LANG):
+    """
+    Internal function.
+    Returns an HTML formatted user friendly description of a search query's
+    arguments.
+
+    @param args: The search query arguments as they apear in the search URL
+    @type args: string
+
+    @param ln: The language to display the interface in
+    @type ln: string
+
+    @return: HTML formatted user friendly description of a search query's
+             arguments
+    """
+
+    # Load the right language
+    _ = gettext_set_language(ln)
+
+    # Arguments dictionary
+    args_dict = parse_qs(args)
+
+    if not args_dict.has_key('p') and not args_dict.has_key('p1') and not args_dict.has_key('p2') and not args_dict.has_key('p3'):
+        search_patterns_html = _('You searched for everything')
+    else:
+        search_patterns_html = _('You searched for') + ' '
+        if args_dict.has_key('p'):
+            search_patterns_html += '<strong>' + cgi.escape(args_dict['p'][0]) + '</strong>'
+            if args_dict.has_key('f'):
+                search_patterns_html += ' ' + _('as') + ' ' + '<strong>' + cgi.escape(args_dict['f'][0]) + '</strong>'
+        if args_dict.has_key('p1'):
+            if args_dict.has_key('p'):
+                search_patterns_html += ' ' + _('and') + ' '
+            search_patterns_html += '<strong>' + cgi.escape(args_dict['p1'][0]) + '</strong>'
+            if args_dict.has_key('f1'):
+                search_patterns_html += ' ' + _('as') + ' ' + '<strong>' + cgi.escape(args_dict['f1'][0]) + '</strong>'
+        if args_dict.has_key('p2'):
+            if args_dict.has_key('p') or args_dict.has_key('p1'):
+                if args_dict.has_key('op1'):
+                    search_patterns_html += ' %s ' % (args_dict['op1'][0] == 'a' and _('and') or \
+                                                      args_dict['op1'][0] == 'o' and _('or') or \
+                                                      args_dict['op1'][0] == 'n' and _('and not') or
+                                                      ', ',)
+            search_patterns_html += '<strong>' + cgi.escape(args_dict['p2'][0]) + '</strong>'
+            if args_dict.has_key('f2'):
+                search_patterns_html += ' ' + _('as') + ' ' + '<strong>' + cgi.escape(args_dict['f2'][0]) + '</strong>'
+        if args_dict.has_key('p3'):
+            if args_dict.has_key('p') or args_dict.has_key('p1') or args_dict.has_key('p2'):
+                if args_dict.has_key('op2'):
+                    search_patterns_html += ' %s ' % (args_dict['op2'][0] == 'a' and _('and') or \
+                                                      args_dict['op2'][0] == 'o' and _('or') or \
+                                                      args_dict['op2'][0] == 'n' and _('and not') or
+                                                      ', ',)
+            search_patterns_html += '<strong>' + cgi.escape(args_dict['p3'][0]) + '</strong>'
+            if args_dict.has_key('f3'):
+                search_patterns_html += ' ' + _('as') + ' ' + '<strong>' + cgi.escape(args_dict['f3'][0]) + '</strong>'
+
+    if not args_dict.has_key('c') and not args_dict.has_key('cc'):
+        collections_html = _('in all the collections')
+    else:
+        collections_html = _('in the following collection(s)') + ': '
+        if args_dict.has_key('c'):
+            collections_html += ', '.join('<strong>' + cgi.escape(collection) + '</strong>' for collection in args_dict['c'])
+        elif args_dict.has_key('cc'):
+            collections_html += '<strong>' + cgi.escape(args_dict['cc'][0]) + '</strong>'
+
+    search_query_args_html = search_patterns_html + '<br />' + collections_html
+
+    return search_query_args_html
+
+
+def get_html_user_friendly_date_from_datetext(given_date,
+                                              show_full_date=True,
+                                              show_full_time=True,
+                                              ln=CFG_SITE_LANG):
+    """
+    Internal function.
+    Returns an HTML formatted user friendly description of a search query's
+    last run date.
+
+    @param given_date: The search query last run date in the following format:
+        '2005-11-16 15:11:57'
+    @type given_date: string
+
+    @param show_full_date: show the full date as well
+    @type show_full_date: boolean
+
+    @param show_full_time: show the full time as well
+    @type show_full_time: boolean
+
+    @param ln: The language to display the interface in
+    @type ln: string
+
+    @return: HTML formatted user friendly description of a search query's
+             last run date
+    """
+
+    # Load the right language
+    _ = gettext_set_language(ln)
+
+    # Calculate how many days old the search query is base on the given date
+    # and today
+    # given_date_datestruct[0] --> year
+    # given_date_datestruct[1] --> month
+    # given_date_datestruct[2] --> day in month
+    given_date_datestruct = convert_datetext_to_datestruct(given_date)
+    today = datetime_date.today()
+    if given_date_datestruct[0] != 0 and \
+       given_date_datestruct[1] != 0 and \
+       given_date_datestruct[2] != 0:
+        days_old = (today - datetime_date(given_date_datestruct[0],
+                                          given_date_datestruct[1],
+                                          given_date_datestruct[2])).days
+        if days_old == 0:
+            out = _('Today')
+        elif days_old < 7:
+            out = str(days_old) + ' ' + _('days ago')
+        elif days_old == 7:
+            out = _('A week ago')
+        elif days_old < 14:
+            out = _('More than a week ago')
+        elif days_old == 14:
+            out = _('Two weeks ago')
+        elif days_old < 30:
+            out = _('More than two weeks ago')
+        elif days_old == 30:
+            out = _('A month ago')
+        elif days_old < 90:
+            out = _('More than a month ago')
+        elif days_old < 180:
+            out = _('More than three months ago')
+        elif days_old < 365:
+            out = _('More than six months ago')
+        elif days_old < 730:
+            out = _('More than a year ago')
+        elif days_old < 1095:
+            out = _('More than two years ago')
+        elif days_old < 1460:
+            out = _('More than three years ago')
+        elif days_old < 1825:
+            out = _('More than four years ago')
+        else:
+            out = _('More than five years ago')
+        if show_full_date:
+            out += '&nbsp;' + _('on') + '&nbsp;' + given_date.split()[0]
+            if show_full_time:
+                out += '&nbsp;' + _('at') + '&nbsp;' + given_date.split()[1]
+    else:
+        out = _('unknown')
+
+    return out
