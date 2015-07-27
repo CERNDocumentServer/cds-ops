@@ -19,8 +19,6 @@
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 """ Comments and reviews for records: web interface """
-from docutils.nodes import note
-
 __lastupdated__ = """$Date$"""
 
 __revision__ = """$Id$"""
