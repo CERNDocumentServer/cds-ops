@@ -194,6 +194,7 @@ display-your-searches-url = "/yoursearches/display"
             if section[:21] == "webstat_custom_event_":
                 cols = []
                 name = ""
+                ip_field = None
                 for option, value in conf.items(section):
                     if option == "name":
                         name = value
@@ -203,14 +204,16 @@ display-your-searches-url = "/yoursearches/display"
                         while len(cols) <= index:
                             cols.append("")
                         cols[index] = value
+                    if option == "ip_field":
+                        ip_field = value
                 if name:
                     res = run_sql("SELECT COUNT(id) FROM staEVENT WHERE id = %s", (name, ))
                     if res[0][0] == 0:
                         # name does not exist, create customevent
-                        webstat.create_customevent(name, name, cols)
+                        webstat.create_customevent(name, name, cols, ip_field)
                     else:
                         # name already exists, update customevent
-                        webstat.modify_customevent(name, cols=cols)
+                        webstat.modify_customevent(name, cols=cols, ip_field=ip_field)
 
         sys.exit(0)
 
