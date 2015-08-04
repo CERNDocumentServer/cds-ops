@@ -591,7 +591,46 @@ def get_pdf_request_data(status):
 ###
 
 
+def calculate(s, e, n):
+    """
+    Get details about a book is on loan period
+    during time interval
 
+    @param s: start date.
+    @type s: string
+
+    @param e: end date.
+    @type e: string
+
+    @param n: number of top results.
+    @type n: string
+
+    @return list with Record No, Loan Period,
+    Item copies, Volume and Item List.
+    """
+    s = str(s)
+    e = str(e)
+    n = int(n)
+    res = run_sql("""select crcLOANREQUEST.id_bibrec as Record_no,
+    count(distinct crcLOANREQUEST.barcode) as Barcode,
+    floor(sum(timestampdiff(
+    day, period_of_interest_from, period_of_interest_to
+    )) /
+    count(distinct crcLOANREQUEST.barcode)) as NormalizedLoanPeriod,
+    group_concat(distinct crcLOANREQUEST.barcode),
+    description as Volume
+    from crcLOANREQUEST, crcITEM
+    where period_of_interest_from > %s
+    and
+    period_of_interest_to < %s
+    and
+    crcITEM.barcode = crcLOANREQUEST.barcode
+    group by crcLOANREQUEST.id_bibrec
+    order by NormalizedLoanPeriod desc
+    limit %s
+    """, [s, e, n])  
+
+    return res
 
 def loan_on_desk_confirm(barcode, borrower_id):
     """
