@@ -310,8 +310,6 @@ except:
     register_exception(alert_admin=True, subject='EMERGENCY')
     WebInterfaceAuthorlistPages = WebInterfaceDumbPages
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 if CFG_CERN_SITE:
     try:
         from invenio.aleph_webinterface import WebInterfaceAlephPages
@@ -436,9 +434,8 @@ class WebInterfaceInvenio(WebInterfaceSearchInterfacePages):
                    'info',
                    'authorlist',
                    'youtube',
-                   'news',
+                   'news', \
                ] + test_exports + openaire_exports + cds_exports
-               ] + test_exports + openaire_exports
 
     def __init__(self):
         self.getfile = bibdocfile_legacy_getfile
