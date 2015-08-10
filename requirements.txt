@@ -33,3 +33,4 @@ html2text==2014.7.3
 markdown2==2.2.1
 bleach==1.4
 git+git://github.com/CERNDocumentServer/lumberjack.git
+# git+https://github.com/inveniosoftware/obelix-client.git
