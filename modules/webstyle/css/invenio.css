@@ -4446,11 +4446,28 @@ a.author_orcid_image_link {
     border-bottom: 1px solid #36c;
     border-top: 1px solid #36c;
     margin: 20px 0 0 0;
-    padding: 10px 10px 0 10px;
+    padding: 10px 2%;
+}
+
+.recommendations_contents {
+    display: inline-block;
+    width:50%;
+}
+
+.recommendations_login {
+    width:50%;
+    display: inline-block;
+    font-size: 10px;
+    font-style: italic;
+    text-align: right;
+    padding: 0px;
+
 }
 
 ul.record_recommendation li{
-    margin-top:5px;
+  clear: both;
+  color: #444;
+  margin-top:5px;
 }
 
 /* end of invenio.css */

@@ -37,16 +37,20 @@ $( document ).ready(function() {
         var items = [];
         if (records.length === 0 ) {
             if (data.loggedin === false) {
-                $( "<p/>", {class: 'recommendations_contents', text: "%(text_title)s:" }).appendTo(root);
+                $( "<p/>", {class: 'recommendations_contents',
+                    text: "%(text_title)s:" }).appendTo(root);
+
                 $( "<p/>", {text: "%(text_login)s:" }).appendTo(root);
                 $(root).fadeIn("Slow");
             }
             return;
         }
 
-        $( "<p/>", {class: 'recommendations_contents', text: "%(text_title)s:" }).appendTo(root);
+        $( "<p/>", {class: 'recommendations_contents',
+            text: "%(text_title)s:" }).appendTo(root);
         if (data.loggedin === false) {
-            $( "<p/>", {text: "%(text_login)s:" }).appendTo(root);
+            $( "<p/>", {class: 'recommendations_login',
+                text: "%(text_login)s:" }).appendTo(root);
         }
         var list = $( "<ul/>", {
             "class": "record_recommendation",
@@ -72,9 +76,13 @@ $( document ).ready(function() {
                 authors = val.record_authors;
             }
 
+            if (authors.length >= 2){
+                authors = " - by " + authors;
+            }
+
             $("<li/>", { class: 'record_recommendation',
                          id: val.number,
-                         text: " - by " + authors})
+                         text: authors})
                     .appendTo(list)
                     .prepend($( "<a/>", { href: val.record_url,
                                           text: title })
@@ -99,11 +107,12 @@ def format_element(bfo):
     url = "/record/" + str(bfo.recID) + "/recommendations"
     html = html_script % {'recommendations_url': url,
                           'text_title': _("Recommended Records"),
-                          'text_login': _("Please login for better recommendations"),
+                          'text_login': _(
+                              "Please login for personalized recommendations"),
                           }
     return html
 
 
 def escape_values(bfo):
-    """Called by BibFormat in order to check if output of this element should be escaped."""
+    """Called by BibFormat to check if output should be escaped."""
     return 0

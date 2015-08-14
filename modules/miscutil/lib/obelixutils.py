@@ -19,8 +19,6 @@
 
 """Invenio to obelix-client connector."""
 
-import random
-
 from invenio.bibfield import get_record
 from invenio.bibrank_record_sorter import rank_records
 from invenio.config import CFG_BASE_URL, \
@@ -91,15 +89,15 @@ def clean_user_info(user_info):
     return clean_user_info
 
 
-def get_recommended_records(recid, user_id, collection="",
-                            threshold=70, maximum=3, shuffle=False):
-    """Create record recommendations based on word similarity and Obelix recommendations.
+def get_recommended_records(recid, user_id, collection="", threshold=70,
+                            maximum=3):
+    """
+    Create record recommendations based on word similarity and Recommendations.
 
     @param collection: Collection to take the suggestions from
     @param threshold: Value between 0 and 100. Only records ranked higher
                       than the value are presented.
     @param maximum: Maximum suggestions to show
-    @param shuffle: True or False, should the suggestions be shuffled?
     @return: List of recommended records [{
                                           'number': ,
                                           'record_url': ,
@@ -114,17 +112,25 @@ def get_recommended_records(recid, user_id, collection="",
 
     suggestions = []
     similar_records = _find_similar_records(recid, user_id, collection,
-                                            threshold, maximum, shuffle)
+                                            threshold)
     rec_count = 1
     for sim_recid in similar_records:
-        record = get_record(recid)
-        title = record['title']
-        if title:
-            title = title['title']
-        else:
+        try:
+            record = get_record(sim_recid)
+            title = record['title']
+            if title:
+                title = title['title']
+            else:
+                continue
+
+            rec_authors = record.get('authors.full_name')
+            if rec_authors[0] is None and len(rec_authors) <= 1:
+                authors = "; ".join(record.get('corporate_name.name', ""))
+            else:
+                authors = "; ".join(record['authors.full_name'])
+        except (KeyError, ValueError):
             continue
 
-        authors = "; ".join(record['authors.full_name'])
         record_url = "%s/%s/%s" % (CFG_BASE_URL, CFG_SITE_RECORD,
                                    str(sim_recid))
         url = get_url_customevent(record_url,
@@ -132,18 +138,19 @@ def get_recommended_records(recid, user_id, collection="",
                                   [str(recid), str(sim_recid),
                                    str(rec_count), str(user_id)])
         suggestions.append({
-                           'number': rec_count,
-                           'record_url': url,
-                           'record_title': title.strip(),
-                           'record_authors': authors.strip(),
-                           })
+                            'number': rec_count,
+                            'record_url': url,
+                            'record_title': title.strip(),
+                            'record_authors': authors.strip(),
+                            })
+        if rec_count >= maximum:
+            break
         rec_count += 1
 
     return suggestions
 
 
-def _find_similar_records(recid, user_id=0, collection="", threshold=55,
-                          maximum=3, shuffle=False):
+def _find_similar_records(recid, user_id=0, collection="", threshold=55):
     """Return a list of similar records."""
     from invenio.search_engine import perform_request_search
 
@@ -178,9 +185,4 @@ def _find_similar_records(recid, user_id=0, collection="", threshold=55,
         register_exception(alert_admin=True)
         return []
 
-    if shuffle:
-        if maximum > len(solution_recs):
-            maximum = len(solution_recs)
-        return random.sample(solution_recs, maximum)
-    else:
-        return solution_recs[:maximum]
+    return solution_recs
