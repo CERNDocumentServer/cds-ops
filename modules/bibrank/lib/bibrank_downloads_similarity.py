@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2005, 2006, 2007, 2008, 2010, 2011, 2012 CERN.
+# Copyright (C) 2005, 2006, 2007, 2008, 2010, 2011, 2012, 2015 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -20,29 +20,15 @@
 __revision__ = \
    "$Id$"
 
-from invenio.config import \
-     CFG_ACCESS_CONTROL_LEVEL_SITE, \
-     CFG_CERN_SITE, \
-     CFG_ELASTICSEARCH_LOGGING, \
-     CFG_ELASTICSEARCH_BOT_AGENT_STRINGS
+from invenio.config import (
+    CFG_ACCESS_CONTROL_LEVEL_SITE, CFG_CERN_SITE,
+    CFG_ELASTICSEARCH_BOT_AGENT_STRINGS
+)
 from invenio.dbquery import run_sql
 from invenio.bibrank_downloads_indexer import database_tuples_to_single_list
 from invenio.search_engine_utils import get_fieldvalues
+from invenio.errorlib import register_exception
 
-if CFG_ELASTICSEARCH_LOGGING:
-    from invenio.elasticsearch_logging import register_schema
-    import logging
-
-    register_schema('events.pageviews',
-        {
-            '_source': {'enabled': True},
-            'properties': {
-                'id_bibrec': {'type': 'integer'},
-                'id_user': {'type': 'integer'},
-                'client_host': {'type': 'ip'}
-            }
-        })
-    _PAGEVIEW_LOG = logging.getLogger('events.pageviews')
 
 def record_exists(recID):
     """Return 1 if record RECID exists.
@@ -72,24 +58,26 @@ def register_page_view_event(recid, uid, client_ip_address, user_agent):
         # do not register access if we are in read-only access control
         # site mode:
         return []
-    if CFG_ELASTICSEARCH_LOGGING:
-        log_event = {
-            'id_bibrec': recid,
-            'id_user': uid,
-            'client_host': client_ip_address,
-            'user_agent': user_agent
-        }
-        if user_agent is not None:
+
+    # register event in webstat
+    try:
+        from invenio.webstat import register_customevent
+        pageviews_register_event = [
+            recid, uid, client_ip_address, user_agent
+        ]
+        is_bot = False
+        if user_agent:
             for bot in CFG_ELASTICSEARCH_BOT_AGENT_STRINGS:
                 if bot in user_agent:
-                    log_event['bot'] = True
+                    is_bot = True
                     break
-        _PAGEVIEW_LOG.info(log_event)
-    else:
-        return run_sql("INSERT INTO rnkPAGEVIEWS " \
-                       " (id_bibrec,id_user,client_host,view_time) " \
-                       " VALUES (%s,%s,INET_ATON(%s),NOW())", \
-                       (recid, uid, client_ip_address))
+        pageviews_register_event.append(is_bot)
+        register_customevent("pageviews", pageviews_register_event)
+    except:
+        register_exception(
+            ("Do the webstat tables exists? Try with 'webstatadmin"
+             " --load-config'")
+        )
 
 def calculate_reading_similarity_list(recid, type="pageviews"):
     """Calculate reading similarity data to use in reading similarity

@@ -1,21 +1,21 @@
-# $id: webstatadmin.py,v 1.28 2007/04/01 23:46:46 tibor exp $
-#
-# This file is part of Invenio.
-# Copyright (C) 2007, 2008, 2010, 2011 CERN.
-#
-# Invenio is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+## $id: webstatadmin.py,v 1.28 2007/04/01 23:46:46 tibor exp $
+##
+## This file is part of Invenio.
+## Copyright (C) 2007, 2008, 2010, 2011 CERN.
+##
+## Invenio is free software; you can redistribute it and/or
+## modify it under the terms of the GNU General Public License as
+## published by the Free Software Foundation; either version 2 of the
+## License, or (at your option) any later version.
+##
+## Invenio is distributed in the hope that it will be useful, but
+## WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+## General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with Invenio; if not, write to the Free Software Foundation, Inc.,
+## 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 __revision__ = "$Id$"
 __lastupdated__ = "$Date$"
@@ -181,8 +181,8 @@ add-to-basket-url = "/yourbaskets/add"
 display-basket-url = "/yourbaskets/display"
 display-public-basket-url = "/yourbaskets/display_public"
 alert-url = "/youralerts/"
-display-your-alerts-url = "/youralerts/display"
-display-your-searches-url = "/yoursearches/display"
+display-your-alerts-url = "/youralerts/list"
+display-your-searches-url = "/youralerts/display"
 """ % CFG_SITE_RECORD
         sys.exit(0)
 
@@ -194,6 +194,7 @@ display-your-searches-url = "/yoursearches/display"
             if section[:21] == "webstat_custom_event_":
                 cols = []
                 name = ""
+                ip_field = None
                 for option, value in conf.items(section):
                     if option == "name":
                         name = value
@@ -203,14 +204,16 @@ display-your-searches-url = "/yoursearches/display"
                         while len(cols) <= index:
                             cols.append("")
                         cols[index] = value
+                    if option == "ip_field":
+                        ip_field = value
                 if name:
                     res = run_sql("SELECT COUNT(id) FROM staEVENT WHERE id = %s", (name, ))
                     if res[0][0] == 0:
                         # name does not exist, create customevent
-                        webstat.create_customevent(name, name, cols)
+                        webstat.create_customevent(name, name, cols, ip_field)
                     else:
                         # name already exists, update customevent
-                        webstat.modify_customevent(name, cols=cols)
+                        webstat.modify_customevent(name, cols=cols, ip_field=ip_field)
 
         sys.exit(0)
 
