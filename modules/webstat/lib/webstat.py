@@ -1,19 +1,19 @@
-# This file is part of Invenio.
-# Copyright (C) 2007, 2008, 2009, 2010, 2011, 2013 CERN.
-#
-# Invenio is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# Invenio is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Invenio; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+## This file is part of Invenio.
+## Copyright (C) 2007, 2008, 2009, 2010, 2011, 2013 CERN.
+##
+## Invenio is free software; you can redistribute it and/or
+## modify it under the terms of the GNU General Public License as
+## published by the Free Software Foundation; either version 2 of the
+## License, or (at your option) any later version.
+##
+## Invenio is distributed in the hope that it will be useful, but
+## WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+## General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with Invenio; if not, write to the Free Software Foundation, Inc.,
+## 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 __revision__ = "$Id$"
 __lastupdated__ = "$Date$"
@@ -796,31 +796,14 @@ def register_customevent(event_id, *arguments):
 
     # Make sql query
     if len(arguments[0]) != 0:
-        sql_param = []
-        sql_query = ["INSERT INTO %s (" % wash_table_column_name(tbl_name)]
-        for title in col_titles:
-            sql_query.append("`%s`" % title)
-            sql_query.append(",")
-        # del the last ','
-        sql_query.pop()
-        sql_query.append(") VALUES (")
-        for argument in arguments[0]:
-            sql_query.append("%s")
-            sql_query.append(",")
-            sql_param.append(argument)
-        # del the last ','
-        sql_query.pop()
-        sql_query.append(")")
-        sql_str = ''.join(sql_query)
-        run_sql(sql_str, tuple(sql_param))
-
+        # Register the event on elastic search ONLY!
+        elastic_search_event_id = "events.{0}".format(event_id)
         # Register the event on elastic search
-        if CFG_ELASTICSEARCH_LOGGING and event_id in \
+        if CFG_ELASTICSEARCH_LOGGING and elastic_search_event_id in \
                 CFG_ELASTICSEARCH_EVENTS_MAP.keys():
             # Initialize elastic search handler
             elastic_search_parameters = zip(col_titles, arguments[0])
-            event_logger_name = "events.{0}".format(event_id)
-            logger = getLogger(event_logger_name)
+            logger = getLogger(elastic_search_event_id)
             log_event = {}
             for key, value in elastic_search_parameters:
                 log_event[key] = value
@@ -829,6 +812,24 @@ def register_customevent(event_id, *arguments):
             else:
                 postprocessors = []
             logger.info(log_event, {'postprocessors': postprocessors})
+        else:
+            sql_param = []
+            sql_query = ["INSERT INTO %s (" % wash_table_column_name(tbl_name)]
+            for title in col_titles:
+                sql_query.append("`%s`" % title)
+                sql_query.append(",")
+            # del the last ','
+            sql_query.pop()
+            sql_query.append(") VALUES (")
+            for argument in arguments[0]:
+                sql_query.append("%s")
+                sql_query.append(",")
+                sql_param.append(argument)
+            # del the last ','
+            sql_query.pop()
+            sql_query.append(")")
+            sql_str = ''.join(sql_query)
+            run_sql(sql_str, tuple(sql_param))
     else:
         # kwalitee: disable=sql
         run_sql(
