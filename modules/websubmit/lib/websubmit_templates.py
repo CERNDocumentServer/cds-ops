@@ -34,6 +34,7 @@ from invenio.urlutils import create_html_link
 from invenio.webmessage_mailutils import email_quoted_txt2html
 from invenio.htmlutils import escape_html, escape_javascript_string
 from invenio.websubmit_config import CFG_WEBSUBMIT_CHECK_USER_LEAVES_SUBMISSION
+from invenio.websubmit_functions.ParamFile import ParamFromFile
 
 class Template:
 
@@ -3110,7 +3111,7 @@ if (typeof datum === "undefined") {
                 'email': (datum['email'] !== undefined) ? datum['email'] : ''
             });
         }
-        $('.typeahead').typeahead('val', '');
+        $('#author_textbox').typeahead('val', '');
     }
 
     function appendRow(author) {
@@ -3258,7 +3259,7 @@ if (typeof datum === "undefined") {
             engine.initialize();
         }
 
-        $('.typeahead').typeahead({
+        $('#author_textbox').typeahead({
             highlight: true,
             hint: true,
             minLength: 3
