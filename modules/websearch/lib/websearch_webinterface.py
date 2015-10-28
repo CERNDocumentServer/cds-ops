@@ -21,14 +21,15 @@ __revision__ = "$Id$"
 __lastupdated__ = """$Date$"""
 
 import cgi
-import os
 import datetime
 import json
-import time
+import logging
+import os
 import sys
+import threading
+import time
 from urllib import quote
 from invenio import webinterface_handler_config as apache
-import threading
 
 #maximum number of collaborating authors etc shown in GUI
 MAX_COLLAB_LIST = 10
@@ -294,7 +295,6 @@ class WebInterfaceRecordPages(WebInterfaceDirectory):
             obelix.log('page_view_after_search',
                        clean_user_info(user_info),
                        argd['recid'])
-
         except Exception:
             register_exception(alert_admin=True)
 
@@ -348,12 +348,21 @@ class WebInterfaceRecordRecommendations(WebInterfaceDirectory):
             return {'stat': 'fail', "code": 1, "message": "Not authorized"}
 
         result = {}
-        result['items'] = get_recommended_records(self.recid, uid,
-                collection="", threshold=55, maximum=3)
+        result['items'] = get_recommended_records(self.recid, uid)
         result['loggedin'] = True if uid > 0 else False
         result['stat'] = 'ok'
 
-        return json.dumps(result)
+        try:
+            output = json.dumps(result)
+        except UnicodeDecodeError as e:
+            e.level = logging.WARN
+            register_exception(alert_admin=True, prefix="UnicodeDecodeError, "
+                               "Record needs to be fixed")
+            result = {'stat': 'fail', "code": 2,
+                      "message": "UnicodeDecodeError"}
+            output = json.dumps(result)
+
+        return output
 
 
 class WebInterfaceRecordRestrictedPages(WebInterfaceDirectory):
