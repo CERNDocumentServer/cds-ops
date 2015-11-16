@@ -67,12 +67,13 @@ CFG_SUBFIELFD_TO_JSON_FIELDS = {
     CFG_SUBFIELD_DEFINITIONS["name"]: "name",
     CFG_SUBFIELD_DEFINITIONS["id"]: {
         "id": "id",
-        "SzGeCERN" : "cernccid",
-        "INSPIRE": "inspireid"
+        "SzGeCERN": "cernccid",
+        "INSPIRE": "inspireid",
+        "CDS": "recid",
     },
     CFG_SUBFIELD_DEFINITIONS["contribution"]: "contribution",
     CFG_SUBFIELD_DEFINITIONS["affiliation"]: "affiliation",
-    CFG_SUBFIELD_DEFINITIONS["email"]: "email"
+    CFG_SUBFIELD_DEFINITIONS["email"]: "email",
 }
 
 # Mapping of the internal field names to tpl attribute and file names
@@ -85,7 +86,8 @@ CFG_JSON_TO_TPL_FIELDS = {
     "cernccid": "AUTHOR_ID",
     "affiliation": "AUTHOR_AFFILIATION",
     "email": "AUTHOR_EMAIL",
-    "contribution": "AUTHOR_CONTRIBUTION"
+    "contribution": "AUTHOR_CONTRIBUTION",
+    "recid": "AUTHOR_ID",
 }
 
 # Mapping from the id type name to id_encaptulation string used to
@@ -93,7 +95,8 @@ CFG_JSON_TO_TPL_FIELDS = {
 CFG_AUTHORITY_CONTAINER_DICTIONARY = {
     "id": "AUTHOR|(ID)%s",
     "inspireid": "AUTHOR|(INSPIRE)%s",
-    "cernccid": "AUTHOR|(SzGeCERN)%s"
+    "cernccid": "AUTHOR|(SzGeCERN)%s",
+    "recid": "AUTHOR|(CDS)%s",
 }
 
 # Create a template dictionary that has all the values from
