@@ -1,5 +1,5 @@
 # This file is part of Invenio.
-# Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 CERN.
+# Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2015 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Invenio; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+
 """Description:   function Report_Number_Generation
                    This function creates a reference for the submitted
                   document and saves it in the specified file.
     Author:         T.Baron"""
+
 __revision__ = "$Id$"
 
 import os
@@ -26,6 +28,7 @@ import time
 import fcntl
 import errno
 
+from invenio.search_engine import get_creation_date, get_fieldvalues
 from invenio.config import CFG_WEBSUBMIT_COUNTERSDIR
 from invenio.websubmit_config import InvenioWebSubmitFunctionError
 from invenio.shellutils import mymkdir
@@ -69,8 +72,10 @@ def Report_Number_Generation(parameters, curdir, form, user_info=None):
                         a file genereated during submission, matching [re]
                         separated by - (dash) char .
 
-      * yeargen: if "AUTO", current year, else the year is
-                 extracted from the file [yeargen]
+      * yeargen: year generation. You can use:
+                 "AUTO", for current year
+                 "CREATION", for year of document (publication, if not found, record creation)
+                 else, extracted from the file [yeargen]
 
                  * nblength: the number of digits for the report
                   number. Eg: '3' for XXX-YYYY-025 or '4'
@@ -95,7 +100,24 @@ def Report_Number_Generation(parameters, curdir, form, user_info=None):
         if parameters['yeargen'] == "AUTO":
             # Current year is used
             yy = time.strftime("%Y")
-        else :
+        elif parameters['yeargen'] == 'CREATION':
+            # Publication date (only if the record exits)
+            fp = open("%s/%s" % (curdir, 'SN'), "r")
+            recid = fp.read()
+            fp.close()
+            yy = ''
+            try:
+                # first see if the publication date is available
+                yy = get_fieldvalues(recid, '260__c')[0]
+                if not yy:
+                    # if the publication date is not available, check the imprint date
+                    yy = get_fieldvalues(recid, '269__c')[0][-4:]
+            except IndexError:
+                pass
+            if not re.match('\d{4}', yy):
+                # fallback on the record creation date
+                yy = get_creation_date(recid, '%Y')
+        else:
             # If yeargen != auto then the contents of the file named 'yeargen' is used
             # Assumes file uses DD-MM-YYYY format
             fp = open("%s/%s" % (curdir, parameters['yeargen']), "r")
