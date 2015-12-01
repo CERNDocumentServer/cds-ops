@@ -1701,9 +1701,10 @@ class Template:
             relate_file_title = (
                 "Relate this comment to an existing file revision"
             )
+
             relate_file_element = (
-                "<label>{0}</label><br />{1}").format(
-                    relate_file_title, relate_file_selector)
+                "<div id='related_file'><small>{0}</small>"
+                "{1}</div>").format(relate_file_title, relate_file_selector)
 
         form = """<div id="comment-write"><h2>%(add_comment)s</h2>
                     %(editor)s
