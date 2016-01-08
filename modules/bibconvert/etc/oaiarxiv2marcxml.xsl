@@ -610,10 +610,10 @@
                </datafield>
              </xsl:if>
 
-             <xsl:if test="contains(./OAI-PMH:metadata/arXiv:arXiv/arXiv:report-no, 'CERN-PH-EP')">
+             <xsl:if test="contains(./OAI-PMH:metadata/arXiv:arXiv/arXiv:report-no, 'CERN-EP')">
                <datafield tag="084" ind1 = " " ind2 = " ">
                  <subfield code="a">
-                   <xsl:variable name="reportdate" select="substring-after($RN3, 'CERN-PH-EP-')"/>PH-EP-<xsl:choose>
+                   <xsl:variable name="reportdate" select="substring-after($RN3, 'CERN-EP-')"/>EP-<xsl:choose>
                    <xsl:when test="contains($reportdate,',')">
                      <xsl:value-of select="substring-before($reportdate, ',')"/>
                    </xsl:when>
@@ -625,7 +625,7 @@
                  <subfield code="2">CERN Library</subfield>
                </datafield>
                <datafield tag="710" ind1 = " " ind2 = " ">
-                 <subfield code="5">PH-EP</subfield>
+                 <subfield code="5">EP</subfield>
                </datafield>
              </xsl:if>
 
@@ -771,7 +771,7 @@
            <xsl:if test="./OAI-PMH:metadata/arXiv:arXiv/arXiv:license">
               <datafield tag="540" ind1=" " ind2=" ">
                  <subfield code="u"><xsl:value-of select="normalize-space(./OAI-PMH:metadata/arXiv:arXiv/arXiv:license)"/></subfield>
-                 <subfield code="b">arXiv</subfield>  
+                 <subfield code="b">arXiv</subfield>
                  <xsl:choose>
                     <xsl:when test="contains(./OAI-PMH:metadata/arXiv:arXiv/arXiv:license, 'creativecommons.org/licenses/by/3.0')">
                        <subfield code="a">CC-BY-3.0</subfield>
