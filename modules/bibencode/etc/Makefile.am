@@ -23,7 +23,8 @@ etc_DATA = encoding_profiles.json \
            batch_template_submission.json \
            pbcore_mappings.json \
            pbcore_to_marc.xsl \
-           pbcore_to_marc_nons.xsl
+           pbcore_to_marc_nons.xsl \
+           client_secrets.json
 
 EXTRA_DIST = $(etc_DATA)
 

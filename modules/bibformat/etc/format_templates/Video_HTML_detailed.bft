@@ -6,8 +6,6 @@
 	<script type="text/javascript" src="/js/jquery.min.js"></script>
 	<script type="text/javascript" src="/mediaelement/mediaelement-and-player.js"></script>
 	<script type="text/javascript" src="/js/video_platform_record.js"></script>
-
-		<!-- VIDEO PLAYER -->
 		<div class="video_black_band">
 			<div class="video_player">
 				<BFE_VIDEO_PLATFORM_SOURCES/>
@@ -15,6 +13,7 @@
 			</div>
 		</div>
 		<!-- CONTENT -->
+
 		<div class="video_content_wrapper">
 			<!-- LEFT COLUMN -->
 			<div class="video_content_left">
@@ -38,6 +37,7 @@
 				<div id="video_download_button">
 					Download Video
 				</div>
+				<BFE_YOUTUBE_AUTHORIZATION />
 				<!-- VIDEO COMMENTS -->
 				<BFE_COMMENTS show_reviews="False" />
 			</div>
@@ -47,8 +47,5 @@
 			</div>
 			<div class="video_content_clear"></div>
 		</div>
-
-		<div class="video_content_clear"></div>
-
 		<!-- Elements that are only evaluated by JavaScript -->
 		<BFE_VIDEO_PLATFORM_DOWNLOADS/>
