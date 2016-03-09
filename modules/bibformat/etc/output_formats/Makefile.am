@@ -34,6 +34,7 @@ etc_DATA = HB.bfo \
   	   HDFILE.bfo \
 	   XD.bfo \
 	   DCITE.bfo \
+	   DCITE3.bfo \
 	   WAPAFF.bfo \
 	   WAPDAT.bfo \
 	   XW.bfo \
