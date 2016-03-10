@@ -113,6 +113,12 @@ except:
     WebInterfaceUnAPIPages = WebInterfaceDumbPages
 
 try:
+    from invenio.websearch_webinterface import WebInterfaceYourSearchesPages
+except:
+    register_exception(alert_admin=True, subject='EMERGENCY')
+    WebInterfaceYourSearchesPages = WebInterfaceDumbPages
+
+try:
     from invenio.bibdocfile_webinterface import bibdocfile_legacy_getfile
 except:
     register_exception(alert_admin=True, subject='EMERGENCY')
@@ -395,6 +401,7 @@ class WebInterfaceInvenio(WebInterfaceSearchInterfacePages):
                    'yourcomments',
                    'ill',
                    'yourgroups',
+                   'yoursearches',
                    'yourtickets',
                    'comments',
                    'error',
@@ -438,6 +445,7 @@ class WebInterfaceInvenio(WebInterfaceSearchInterfacePages):
         yourloans = WebInterfaceDisabledPages()
         ill = WebInterfaceDisabledPages()
         yourgroups = WebInterfaceDisabledPages()
+        yoursearches = WebInterfaceDisabledPages()
         yourtickets = WebInterfaceDisabledPages()
         comments = WebInterfaceDisabledPages()
         error = WebInterfaceErrorPages()
@@ -478,6 +486,7 @@ class WebInterfaceInvenio(WebInterfaceSearchInterfacePages):
         yourloans = WebInterfaceYourLoansPages()
         ill = WebInterfaceILLPages()
         yourgroups = WebInterfaceYourGroupsPages()
+        yoursearches = WebInterfaceYourSearchesPages()
         yourtickets = WebInterfaceYourTicketsPages()
         comments = WebInterfaceCommentsPages()
         error = WebInterfaceErrorPages()

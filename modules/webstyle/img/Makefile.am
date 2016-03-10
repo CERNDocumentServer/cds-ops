@@ -329,7 +329,15 @@ img_DATA = add-small.png \
            yammer_icon_48.png \
            sign_in_with_google.png \
            youtube-logo-icon-24px.png \
-           filter_filled.png
+           filter_filled.png \
+           yoursearches_alert.png \
+           yoursearches_alert_edit.png \
+           yoursearches_search.png \
+           youralerts_alert.png \
+           youralerts_alert_delete.png \
+           youralerts_alert_edit.png \
+           youralerts_alert_pause.png \
+           youralerts_alert_resume.png
 
 tmpdir=$(localstatedir)/tmp
 

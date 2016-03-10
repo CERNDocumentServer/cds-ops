@@ -829,38 +829,50 @@ a.google:hover {
   text-align: left;
   vertical-align: top;
 }
-.youraccountbox {
-  color: #000;
-  background: #fff;
-  padding: 1px;
-  margin: 5px 0px 5px 0px;
-  border-collapse: collapse;
-  border-top: 1px solid #fc0;
+
+div.youraccount_grid {
+    width: 100%;
 }
-.youraccountheader {
-  color: #333;
-  background: #ffc;
-  font-weight: normal;
-  font-size: small;
-  vertical-align: top;
-  text-align: left;
+
+div.youraccount_grid:after {
+    content: "";
+    display: table;
+    clear: both;
 }
-.youraccountbody {
-  color: #333;
-  background: #fff;
-  padding: 0px 5px 0px 5px;
-  margin-bottom:5px;
-  font-size: small;
-  text-align: left;
-  vertical-align: top;
+
+div.youraccount_grid_column_1_3 {
+    width: 33.33%;
+    float: left;
 }
-th.youraccountheader a:link, th.youraccountheader a:visited {
-  color:#000000;
-  text-decoration:none;
+
+div.youraccount_grid_column_content {
+    margin: 7px 7px 14px 7px;
+    border: 1px solid #FFCC00;
+    /*border-radius: 0px 0px 15px 0px;*/
 }
-th.youraccountheader a:hover {
-  text-decoration:underline;
+
+div.youraccount_grid_column_title {
+    border-bottom: 1px solid #FFCC00;
+    background-color: #FFFFCC;
+    padding: 7px;
 }
+
+div.youraccount_grid_column_title a, div.youraccount_grid_column_title a:link, div.youraccount_grid_column_title a:visited, div.youraccount_grid_column_title a:active {
+    color: black;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+div.youraccount_grid_column_title a:hover {
+    color: black;
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+div.youraccount_grid_column_body {
+    padding: 10px;
+}
+
 .adminbox {
   color: #000;
   background: #f1f1f1;
@@ -2565,6 +2577,7 @@ a:hover.bibMergeImgClickable img {
   background:Yellow;
 }
 /* end of BibMerge module */
+
 /* WebAlert module */
 .alrtTable{
   border: 1px solid black;
@@ -2576,7 +2589,206 @@ a:hover.bibMergeImgClickable img {
   border: 1px solid black;
   padding: 3px;
 }
+
+.youralerts_display_table {
+   border: 1px solid #ffcc00;
+   min-width: 800px;
+}
+.youralerts_display_table_header td {
+   background-color: #ffffcc;
+   color: black;
+   padding: 2px;
+   font-size: 80%;
+   text-align: center;
+   white-space: nowrap;
+   border-bottom: 1px solid #ffcc00;
+}
+.youralerts_display_table_footer td {
+   background-color: #ffffcc;
+   color: black;
+   padding: 2px;
+   font-size: 80%;
+   text-align: center;
+   white-space: nowrap;
+}
+.youralerts_display_table_footer img, .youralerts_display_table_header img {
+   border: none;
+   margin: 0px 3px;
+   vertical-align: bottom;
+}
+.youralerts_display_footer a, .youralerts_display_footer a:link, .youralerts_display_footer a:visited, .youralerts_display_footer a:active {
+   text-decoration: none;
+   color: #333;
+}
+.youralerts_display_footer a:hover {
+   text-decoration: underline;
+   color: #000;
+}
+.youralerts_display_footer img {
+   border: none;
+   vertical-align: bottom;
+}
+.youralerts_display_table_content {
+   background-color: white;
+   padding: 5px;
+   text-align: left;
+   vertical-align: top;
+   border-bottom: 1px solid #ffcc00;
+}
+.youralerts_display_table_content_mouseover {
+   background-color: #ffffe3;
+   padding: 5px;
+   text-align: left;
+   vertical-align: top;
+   border-bottom: 1px solid #ffcc00;
+}
+.youralerts_display_table_content_container_main {
+   width: 100%;
+}
+.youralerts_display_table_counter {
+   background-color: white;
+   padding: 5px 2px;
+   text-align: right;
+   vertical-align: top;
+   font-size: 80%;
+   color: gray;
+   border-bottom: 1px solid #ffcc00;
+}
+.youralerts_display_table_content_name {
+   margin-bottom: 5px;
+   position: relative;
+   left: 0px;
+   top: 0px;
+}
+.youralerts_display_table_content_details {
+   margin-bottom: 5px;
+   position: relative;
+   left: 0px;
+}
+.youralerts_display_table_content_search_query {
+   margin-bottom: 5px;
+   position: relative;
+   left: 0px;
+}
+.youralerts_display_table_content_dates {
+   margin-bottom: 5px;
+   position: relative;
+   left: 0px;
+   font-size: 80%;
+   color: gray;
+   white-space: nowrap;
+}
+.youralerts_display_table_content_options {
+   margin-bottom: 5px;
+   position: relative;
+   left: 0px;
+   font-size: 80%;
+   white-space: nowrap;
+}
+.youralerts_display_table_content_options img{
+   vertical-align: top;
+   margin-right: 3px;
+}
+.youralerts_display_table_content_options a, .youralerts_display_table_content_options a:link, .youralerts_display_table_content_options a:visited, .youralerts_display_table_content_options a:active {
+   text-decoration: underline;
+   color: #333;
+}
+.youralerts_display_table_content_options a:hover {
+   text-decoration: underline;
+   color: #000;
+}
+
+.youralerts_display_table_content_inactive {
+   color: #CCCCCC;
+}
+.youralerts_display_table_content_inactive a, .youralerts_display_table_content_inactive a:link, .youralerts_display_table_content_inactive a:visited, .youralerts_display_table_content_inactive a:active, .youralerts_display_table_content_inactive a:hover {
+   color: #CCCCCC;
+}
 /* end of WebAlert module */
+
+/* WebSearch module - YourSearches */
+.websearch_yoursearches_table {
+   border: 1px solid #ffcc00;
+}
+.websearch_yoursearches_table_header td {
+   background-color: #ffffcc;
+   color: black;
+   padding: 5px;
+   font-size: 80%;
+   text-align: center;
+   white-space: nowrap;
+   border-bottom: 1px solid #ffcc00;
+}
+.websearch_yoursearches_table_footer td {
+   background-color: #ffffcc;
+   color: black;
+   padding: 5px;
+   font-size: 80%;
+   text-align: center;
+   white-space: nowrap;
+}
+.websearch_yoursearches_table_footer img, .websearch_yoursearches_table_header img {
+   border: none;
+   margin: 0px 3px;
+   vertical-align: bottom;
+}
+.websearch_yoursearches_footer a, .websearch_yoursearches_footer a:link, .websearch_yoursearches_footer a:visited, .websearch_yoursearches_footer a:active {
+   text-decoration: none;
+   color: #000;
+}
+.websearch_yoursearches_footer a:hover {
+   text-decoration: underline;
+   color: #000;
+}
+.websearch_yoursearches_footer img {
+   border: none;
+   vertical-align: bottom;
+}
+.websearch_yoursearches_table_content {
+   background-color: white;
+   padding: 5px;
+   text-align: left;
+   vertical-align: top;
+   border-bottom: 1px solid #ffcc00;
+}
+.websearch_yoursearches_table_content_mouseover {
+   background-color: #ffffe3;
+   padding: 5px;
+   text-align: left;
+   vertical-align: top;
+   border-bottom: 1px solid #ffcc00;
+}
+.websearch_yoursearches_table_counter {
+   background-color: white;
+   padding: 5px 2px;
+   text-align: right;
+   vertical-align: top;
+   font-size: 80%;
+   color: grey;
+   border-bottom: 1px solid #ffcc00;
+}
+.websearch_yoursearches_table_content_dates {
+   color: gray;
+   margin: 5px;
+   font-size: 80%;
+}
+.websearch_yoursearches_table_content_options {
+   margin: 5px;
+   font-size: 80%;
+}
+.websearch_yoursearches_table_content_options img{
+   vertical-align: top;
+   margin-right: 3px;
+}
+.websearch_yoursearches_table_content_options a, .websearch_yoursearches_table_content_options a:link, .websearch_yoursearches_table_content_options a:visited, .websearch_yoursearches_table_content_options a:active {
+   text-decoration: underline;
+   color: #333;
+}
+.websearch_yoursearches_table_content_options a:hover {
+   text-decoration: underline;
+   color: #000;
+}
+/* end of WebSearches module - YourSearches */
 
 /* BibClassify module */
 .bibclassify {

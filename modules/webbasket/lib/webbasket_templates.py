@@ -41,9 +41,7 @@ from invenio.config import \
      CFG_SITE_RECORD
 from invenio.webuser import get_user_info
 from invenio.dateutils import convert_datetext_to_dategui
-from invenio.webbasket_dblayer import get_basket_item_title_and_URL, \
-                                      get_basket_ids_and_names
-from invenio.bibformat import format_record
+from invenio.webbasket_dblayer import get_basket_ids_and_names
 
 class Template:
     """Templating class for webbasket module"""
@@ -2116,22 +2114,6 @@ class Template:
               'submit_label': _("Add group")}
         return out
 
-    def tmpl_personal_baskets_selection_box(self,
-                                            baskets=[],
-                                            select_box_name='baskets',
-                                            selected_bskid=None,
-                                            ln=CFG_SITE_LANG):
-        """return an HTML popupmenu
-        @param baskets: list of (bskid, bsk_name, bsk_topic) tuples
-        @param select_box_name: name that will be used for the control
-        @param selected_bskid: id of the selcte basket, use None for no selection
-        @param ln: language"""
-        _ = gettext_set_language(ln)
-        elements = [(0, '- ' + _("no basket") + ' -')]
-        for (bskid, bsk_name, bsk_topic) in baskets:
-            elements.append((bskid, bsk_topic + ' &gt; ' + bsk_name))
-        return self.__create_select_menu(select_box_name, elements, selected_bskid)
-
     def tmpl_create_guest_warning_box(self, ln=CFG_SITE_LANG):
         """return html warning box for non registered users"""
         _ = gettext_set_language(ln)
@@ -3042,7 +3024,7 @@ class Template:
     </tr>""" % _("The item you have selected does not exist.")
 
                 else:
-                    (recid, colid, dummy, last_cmt, val, dummy) = item
+                    (recid, colid, dummy, dummy, val, dummy) = item
 
                     if recid < 0:
                         external_item_img = '<img src="%s/img/wb-external-item.png" alt="%s" style="vertical-align: top;" />&nbsp;' % \
@@ -3905,8 +3887,7 @@ class Template:
     </tr>""" % {'count': index_item,
                 'icon': external_item_img,
                 'content': colid >= 0 and val or val and self.tmpl_create_pseudo_item(val) or _("This record does not seem to exist any more"),
-                'notes': notes,
-                'ln': ln}
+                'notes': notes,}
 
             item_html += """
   </tbody>"""
@@ -4185,9 +4166,9 @@ class Template:
                     recid)
 
         export_as_html = ""
-        for format in list_of_export_as_formats:
+        for of in list_of_export_as_formats:
             export_as_html += """<a style="text-decoration:underline;font-weight:normal" href="%s&amp;of=%s">%s</a>, """ % \
-                              (href, format[1], format[0])
+                              (href, of[1], of[0])
         if export_as_html:
             export_as_html = export_as_html[:-2]
         out = """
@@ -4198,6 +4179,34 @@ class Template:
     </li>
   </ul>
 </div>""" % (export_as_html,)
+
+        return out
+
+    def tmpl_account_user_baskets(self, personal, group, external, ln = CFG_SITE_LANG):
+        """
+        Information on the user's baskets for the "Your Account" page.
+        """
+
+        _ = gettext_set_language(ln)
+
+        if (personal, group, external) == (0, 0, 0):
+            out = _("You have not created any personal baskets yet, you are not part of any group baskets and you have not subscribed to any public baskets.")
+        else:
+            x_generic_url_open = '<a href="%s/yourbaskets/display?category=%%s&amp;ln=%s">' % (CFG_SITE_SECURE_URL, ln)
+            out = _("You have %(x_personal_url_open)s%(x_personal_nb)s personal baskets%(x_personal_url_close)s, you are part of %(x_group_url_open)s%(x_group_nb)s group baskets%(x_group_url_close)s and you are subscribed to %(x_public_url_open)s%(x_public_nb)s public baskets%(x_public_url_close)s.") % \
+                {'x_personal_url_open'  : '<strong>%s' % (personal > 0 and x_generic_url_open % (CFG_WEBBASKET_CATEGORIES['PRIVATE'],) or '',),
+                 'x_personal_nb'        : str(personal),
+                 'x_personal_url_close' : '%s</strong>' % (personal > 0 and '</a>' or '',),
+                 'x_group_url_open'     : '<strong>%s' % (group > 0 and x_generic_url_open % (CFG_WEBBASKET_CATEGORIES['GROUP'],) or '',),
+                 'x_group_nb'           : str(group),
+                 'x_group_url_close'    : '%s</strong>' % (group > 0 and '</a>' or '',),
+                 'x_public_url_open'    : '<strong>%s' % (external > 0 and x_generic_url_open % (CFG_WEBBASKET_CATEGORIES['EXTERNAL'],) or '',),
+                 'x_public_nb'          : str(external),
+                 'x_public_url_close'   : '%s</strong>' % (external > 0 and '</a>' or '',),}
+
+        out += " " + _("You might be interested in looking through %(x_url_open)sall the public baskets%(x_url_close)s.") % \
+            {'x_url_open'  : '<a href="%s/yourbaskets/list_public_baskets?ln=%s">' % (CFG_SITE_SECURE_URL, ln),
+             'x_url_close' : '</a>',}
 
         return out
 
@@ -4349,13 +4358,13 @@ def create_add_box_select_options(category,
         if len(personal_basket_list) == 1:
             bskids = personal_basket_list[0][1].split(',')
             if len(bskids) == 1:
-               b = CFG_WEBBASKET_CATEGORIES['PRIVATE'] + '_' + bskids[0]
+                b = CFG_WEBBASKET_CATEGORIES['PRIVATE'] + '_' + bskids[0]
         elif len(group_basket_list) == 1:
             bskids = group_basket_list[0][1].split(',')
             if len(bskids) == 1:
-               b = CFG_WEBBASKET_CATEGORIES['GROUP'] + '_' + bskids[0]
+                b = CFG_WEBBASKET_CATEGORIES['GROUP'] + '_' + bskids[0]
 
-    # Create the <optgroup>s and <option>s for the user personal baskets.
+    # Create the optgroups and options for the user personal baskets.
     if personal_basket_list:
         out += """
             <optgroup label="%s">""" % ('* ' + _('Your personal baskets') + ' *',)
@@ -4378,7 +4387,7 @@ def create_add_box_select_options(category,
         out += """
             </optgroup>"""
 
-    # Create the <optgroup>s and <option>s for the user group baskets.
+    # Create the optgroups and options for the user group baskets.
     if group_basket_list:
         out += """
             <optgroup label="%s">""" % ('* ' + _('Your group baskets') + ' *',)
