@@ -3689,6 +3689,11 @@ def guess_primary_collection_of_a_record(recID):
                 if recID in get_collection_reclist(coll_name):
                     return coll_name
 
+        # even more dirty for CERN Website Archive
+        for coll in dbcollids:
+            if coll == 'WEBPAGE' and recID in get_collection_reclist('CERN Website'):
+                return 'CERN Website'
+
     return out
 
 _re_collection_url = re.compile('/collection/(.+)')
