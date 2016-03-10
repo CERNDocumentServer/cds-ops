@@ -316,6 +316,13 @@ except:
     register_exception(alert_admin=True, subject='EMERGENCY')
     WebInterfaceYoutube = WebInterfaceDumbPages
 
+try:
+    from invenio.webnews_webinterface import WebInterfaceWebNewsPages
+except:
+    register_exception(alert_admin=True, subject='EMERGENCY')
+    WebInterfaceWebNewsPages = WebInterfaceDumbPages
+
+
 if CFG_CERN_SITE:
     try:
         from invenio.aleph_webinterface import WebInterfaceAlephPages
@@ -427,6 +434,7 @@ class WebInterfaceInvenio(WebInterfaceSearchInterfacePages):
                    'info',
                    'authorlist',
                    'youtube',
+                   'news',
                ] + test_exports + openaire_exports + cds_exports
 
     def __init__(self):
@@ -469,6 +477,7 @@ class WebInterfaceInvenio(WebInterfaceSearchInterfacePages):
         yourcomments = WebInterfaceDisabledPages()
         goto = WebInterfaceDisabledPages()
         authorlist = WebInterfaceDisabledPages()
+        news = WebInterfaceDisabledPages()
         youtube = WebInterfaceYoutube()
         if CFG_CERN_SITE:
             cdslib = WebInterfaceDisabledPages()
@@ -510,6 +519,7 @@ class WebInterfaceInvenio(WebInterfaceSearchInterfacePages):
         yourcomments = WebInterfaceYourCommentsPages()
         goto = WebInterfaceGotoPages()
         authorlist = WebInterfaceAuthorlistPages()
+        news = WebInterfaceWebNewsPages()
         youtube = WebInterfaceYoutube()
         if CFG_CERN_SITE:
             cdslib = WebInterfaceAlephPages()
