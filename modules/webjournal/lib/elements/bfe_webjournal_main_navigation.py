@@ -20,7 +20,7 @@
 """
 WebJournal element - Prints main (horizontal) navigation menu
 """
-from invenio.webjournal_utils import \
+from invenio.legacy.webjournal_utils import \
      parse_url_string, \
      make_journal_url, \
      get_journal_categories
@@ -64,7 +64,7 @@ def format_element(bfo, category_prefix, category_suffix, separator=" | ",
             linkattrd = {'class':'selectedNavigationPage'}
         if journal_name == 'CERNBulletin' and \
                category == 'Training and Development':
-            category = 'Training'
+            category = 'Learning'
             if ln == 'fr':
                 category = 'Formations'
         category_link = create_html_link(category_url, {},
@@ -94,6 +94,6 @@ dummy = _("Official News")
 dummy = _("Training and Development")
 dummy = _("General Information")
 dummy = _("Announcements")
-dummy = _("Training")
+dummy = _("Learning")
 dummy = _("Events")
 dummy = _("Staff Association")
