@@ -1156,7 +1156,7 @@ def authorlist_extract(tarball_path, identifier, downloaded_files, stylesheet):
             exitcode, cmd_stderr = call_bibconvert(config=stylesheet, \
                                                    harvestpath=temp_authorlist_path, \
                                                    convertpath=authorlist_resultxml_path)
-            if cmd_stderr == "" and exitcode == 0:
+            if exitcode == 0:
                 # Success!
                 return 0, "", authorlist_resultxml_path
     # No valid authorlist found
