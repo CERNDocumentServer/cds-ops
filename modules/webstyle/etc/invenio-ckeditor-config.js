@@ -45,7 +45,6 @@ config.toolbar_WebComment = [
                              ['HorizontalRule','Smiley','SpecialChar','ScientificChar']
 			     ];
 
-config.skin = 'v2';
 config.resize_dir = 'vertical';
 
 /* Enable browser built-in spellchecker */
@@ -61,5 +60,4 @@ config.contentsCss = ['/img/invenio.css', '/ckeditor/invenio-ckeditor-content.cs
 
 /* Load our Scientific Characters panel */
 config.extraPlugins = 'scientificchar';
-
 }
