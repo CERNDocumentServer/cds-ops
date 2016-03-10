@@ -4291,6 +4291,7 @@ CREATE TABLE IF NOT EXISTS staEVENT (
   name varchar(255),
   creation_time TIMESTAMP DEFAULT NOW(),
   cols varchar(255),
+  ip_field varchar(255),
   PRIMARY KEY  (id),
   UNIQUE KEY number (number)
 ) ENGINE=MyISAM;
