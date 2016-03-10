@@ -1,7 +1,7 @@
 # -*- mode: python; coding: utf-8; -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2010, 2011, 2012 CERN.
+# Copyright (C) 2010, 2011, 2012, 2015 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -17,26 +17,39 @@
 # along with Invenio; if not, write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
-"""Applies a transformation function to a value"""
+"""Applies a transformation function to a value."""
+
 
 import re
+
 from invenio.dateutils import strftime, strptime
+
 from invenio.textutils import decode_to_unicode, translate_to_ascii
+
 
 LEADING_ARTICLES = ['the', 'a', 'an', 'at', 'on', 'of']
 
 _RE_NOSYMBOLS = re.compile("\w+")
 
+
 class InvenioBibSortWasherNotImplementedError(Exception):
-    """Exception raised when a washer method
-    defined in the bibsort config file is not implemented"""
+
+    """
+    Custom exception.
+
+    Exception raised when a washer method
+    defined in the bibsort config file is not implemented
+    """
+
     pass
 
 
 class BibSortWasher(object):
-    """Implements all the washer methods"""
+
+    """Implements all the washer methods."""
 
     def __init__(self, washer):
+        """The init method."""
         self.washer = washer
         fnc_name = '_' + washer
         try:
@@ -45,15 +58,17 @@ class BibSortWasher(object):
             raise InvenioBibSortWasherNotImplementedError(err)
 
     def get_washer(self):
-        """Returns the washer name"""
+        """Return the washer name."""
         return self.washer
 
     def get_transformed_value(self, val):
-        """Returns the value"""
+        """Return the value."""
         return self.washer_fnc(val)
 
     def _sort_alphanumerically_remove_leading_articles_strip_accents(self, val):
         """
+        Return the washed value.
+
         Convert:
         'The title' => 'title'
         'A title' => 'title'
@@ -62,13 +77,15 @@ class BibSortWasher(object):
         if not val:
             return ''
         val = translate_to_ascii(val).pop().lower()
-        val_tokens = val.split(" ", 1) #split in leading_word, phrase_without_leading_word
+        val_tokens = val.split(" ", 1)  # split in leading_word, phrase_without_leading_word
         if len(val_tokens) == 2 and val_tokens[0].strip() in LEADING_ARTICLES:
             return val_tokens[1].strip()
         return val.strip()
 
     def _sort_alphanumerically_remove_leading_articles(self, val):
         """
+        Return the washed value.
+
         Convert:
         'The title' => 'title'
         'A title' => 'title'
@@ -77,31 +94,33 @@ class BibSortWasher(object):
         if not val:
             return ''
         val = decode_to_unicode(val).lower().encode('UTF-8')
-        val_tokens = val.split(" ", 1) #split in leading_word, phrase_without_leading_word
+        val_tokens = val.split(" ", 1)  # split in leading_word, phrase_without_leading_word
         if len(val_tokens) == 2 and val_tokens[0].strip() in LEADING_ARTICLES:
             return val_tokens[1].strip()
         return val.strip()
 
     def _sort_case_insensitive_strip_accents(self, val):
-        """Remove accents and convert to lower case"""
+        """Remove accents and convert to lower case."""
         if not val:
             return ''
         return translate_to_ascii(val).pop().lower()
 
     def _sort_nosymbols_case_insensitive_strip_accents(self, val):
-        """Remove accents, remove symbols, and convert to lower case"""
+        """Remove accents, remove symbols, and convert to lower case."""
         if not val:
             return ''
         return ''.join(_RE_NOSYMBOLS.findall(translate_to_ascii(val).pop().lower()))
 
     def _sort_case_insensitive(self, val):
-        """Conversion to lower case"""
+        """Conversion to lower case."""
         if not val:
             return ''
         return decode_to_unicode(val).lower().encode('UTF-8')
 
     def _sort_dates(self, val):
         """
+        Return the washed date.
+
         Convert:
         '8 nov 2010' => '2010-11-08'
         'nov 2010' => '2010-11-01'
@@ -125,6 +144,8 @@ class BibSortWasher(object):
 
     def _sort_numerically(self, val):
         """
+        Return the washed value.
+
         Convert:
         1245 => float(1245)
         """
@@ -133,10 +154,23 @@ class BibSortWasher(object):
         except ValueError:
             return 0
 
+    def _sort_journal_numbers(self, val):
+        """
+        Return the washed value.
+
+        Sort numerically, with the addition of taking into account
+        values as x-y
+        Convert:
+        1 => int(1)
+        2-3 => int(2)
+        """
+        try:
+            return int(val.split('-')[0])
+        except ValueError:
+            return 0
+
 
 def get_all_available_washers():
-    """
-    Returns all the available washer functions without the leading '_'
-    """
+    """Return all the available washer functions without the leading '_'."""
     method_list = dir(BibSortWasher)
     return [method[1:] for method in method_list if method.startswith('_') and method.find('__') < 0]
