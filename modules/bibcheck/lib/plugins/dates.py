@@ -32,27 +32,19 @@ def check_record(record, fields, dayfirst=True, yearfirst=False,
         minimum_date=datetime(1800,1,1)):
     """
     Corrects and validates date fields
-
     For detailed explanation of how dayfirst and yearfirst works, visit
     http://labix.org/python-dateutil#head-b95ce2094d189a89f80f5ae52a05b4ab7b41af47
-
     For detailed explanation of the date_format placeholders, visit
     http://docs.python.org/2/library/datetime.html#strftime-strptime-behavior
-
     This plugin needs the python-dateutil library to work.
-
     @param dayfirst Consider the day first if ambiguous
     @type dayfirst boolean
-
     @param yearfirst Consider year first if ambiguous
     @type yearfirst boolean
-
     @param date_format normalized date format
     @type date_format string
-
     @param allow_future If False, dates in the future will be marked as invalid
     @type allow_future boolean
-
     @param minimum_date dates older than this will be rejected. Default Jan 1 1800
     @type minimum_date datetime.datetime
     """
@@ -77,4 +69,3 @@ def check_record(record, fields, dayfirst=True, yearfirst=False,
 
         new_date_str = new_date.strftime(date_format)
         record.amend_field(position, new_date_str)
-

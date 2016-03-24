@@ -56,10 +56,8 @@ def check_record(record, fields):
     Checks that the specified field contains a correctly formatted url, if it
     doesn't it tries to figure out the correct url (for example by adding
     http:// at the beginning) and amends the record.
-
     It also makes a HEAD request to the url to check for broken links, server
     errors etc...
-
     If it encounters a permanent redirection (301) it will amend the record with
     the new url of the resource.
     """

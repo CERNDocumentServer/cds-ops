@@ -19,7 +19,6 @@
 
 """
 BibCheck API
-
 This API lets other modules interact with bibcheck.
 """
 
@@ -28,7 +27,6 @@ from invenio import bibcheck_task
 def check_record(record, enabled_rules=None):
     """
     Check a record agains some bibcheck rules.
-
     @param record: Record to check
     @type record: recstruct
     @param enabled_rules: List of rules to run. Default None (run all rules)
@@ -53,4 +51,3 @@ def check_record(record, enabled_rules=None):
             plugin["check_record"](record, **rule["checker_params"])
 
     return record
-

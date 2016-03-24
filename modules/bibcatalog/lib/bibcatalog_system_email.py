@@ -56,7 +56,7 @@ class BibCatalogSystemEmail(BibCatalogSystem):
 
         raise NotImplementedError
 
-    def ticket_submit(self, uid=None, subject="", recordid=-1, text="", queue="", priority="", owner="", requestor=""):
+    def ticket_submit(self, uid=None, **kwargs):
         """creates a ticket. Returns ticket_id on success, otherwise None"""
 
         if not EMAIL_SUBMIT_CONFIGURED:
@@ -65,32 +65,30 @@ class BibCatalogSystemEmail(BibCatalogSystem):
                                prefix="please configure bibcatalog email sending in CFG_BIBCATALOG_SYSTEM and CFG_BIBCATALOG_SYSTEM_EMAIL_ADDRESS")
 
         ticket_id = self._get_ticket_id()
-        priorityset = ""
-        queueset = ""
-        requestorset = ""
-        ownerset = ""
-        recidset = " cf-recordID: %s\n" % recordid
-        textset = ""
-        subjectset = ""
-        if subject:
-            subjectset = 'ticket #%s - %s' % (ticket_id, subject)
-        if priority:
-            priorityset = " priority: %s\n" % priority
-        if queue:
-            queueset = " queue: %s\n" % queue
-        if requestor:
-            requestorset = " requestor: %s\n" % requestor
+        textset = ''
+        ownerset = ''
+        priorityset = ' priority: {0}\n'.format(kwargs['priority']) if 'priority' in kwargs else ""
+        queueset = ' queue: {0}\n'.format(kwargs['queue']) if 'queue' in kwargs else ""
+        requestorset = ' requestor: {0}\n'.format(kwargs['requestor']) if 'requestor' in kwargs else ""
+        recidset = ' cf-recordID: {0}\n'.format(kwargs.get('recordid', -1))
+        subjectset = 'ticket #{0} - {1}'.format(ticket_id, kwargs['subject']) if 'subject' in kwargs else ''
+        owner = kwargs.get('owner', '')
         if owner:
             ownerprefs = invenio.webuser.get_user_preferences(owner)
-            if ownerprefs.has_key("bibcatalog_username"):
-                owner = ownerprefs["bibcatalog_username"]
-            ownerset = " owner: %s\n" % owner
+            if ownerprefs.has_key('bibcatalog_username'):
+                owner = ownerprefs['bibcatalog_username']
+            ownerset = ' owner: {0}\n'.format(owner)
 
         textset += ownerset + requestorset + recidset + queueset + priorityset + '\n'
 
-        textset += text + '\n'
+        textset += kwargs.get('text', '') + '\n'
 
-        ok = send_email(fromaddr=FROM_ADDRESS, toaddr=TO_ADDRESS, subject=subjectset, content=textset)
+        ok = send_email(
+            fromaddr=kwargs.get('from_address', FROM_ADDRESS),
+            toaddr=kwargs.get('to_address', TO_ADDRESS),
+            subject=subjectset,
+            content=textset
+        )
         if ok:
             return ticket_id
         return None
