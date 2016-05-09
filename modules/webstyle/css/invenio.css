@@ -4441,26 +4441,26 @@ a.author_orcid_image_link {
 .submit-area input.adminbutton {
   margin-left: 0;i
 }
+
 /* Record Recommendation */
-.recommendations_content {
-    border-bottom: 1px solid #36c;
-    border-top: 1px solid #36c;
-    margin: 20px 0 0 0;
-    padding: 10px 2%;
+.recommendations {
+    padding: 10px 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    width: 90%;
+    max-width: 1280px;
+    margin: 40px auto 0px;
 }
 
 .recommendations_contents {
-    display: inline-block;
-    width:50%;
+    width: 50%;
+    display: inline;
 }
 
-.recommendations_login {
-    width:50%;
-    display: inline-block;
-    font-style: italic;
-    text-align: right;
-    padding: 0px;
-
+.recommendation_header {
+    display: block;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
 }
 
 ul.record_recommendation li{

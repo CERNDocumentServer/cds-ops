@@ -115,7 +115,8 @@ from invenio.bibfield import get_record
 from invenio.shellutils import mymkdir
 from invenio.websearch_yoursearches import perform_request_yoursearches_display
 from invenio.webstat import register_customevent
-from invenio.obelixutils import obelix, clean_user_info, get_recommended_records
+from invenio.obelixutils import obelix, clean_user_info
+from invenio.recommender import get_recommended_records_with_metadata
 
 import invenio.template
 websearch_templates = invenio.template.load('websearch')
@@ -339,21 +340,31 @@ class WebInterfaceRecordRecommendations(WebInterfaceDirectory):
         uid = user_info['uid']
 
         if uid == -1 or CFG_ACCESS_CONTROL_LEVEL_SITE > 1:
-            return {'stat': 'fail', "code": 1, "message": "Not authorized"}
+            return {'status': 'error', "code": 1, "message": "Not authorized"}
 
         (auth_code, auth_message) = check_user_can_view_record(user_info,
                                                                self.recid)
         if auth_code > 0:
             # Not authorized
-            return {'stat': 'fail', "code": 1, "message": "Not authorized"}
+            return {'status': 'error', "code": 1, "message": "Not authorized"}
 
         result = {}
-        result['items'] = get_recommended_records(self.recid, uid,
-                collection="", threshold=55, maximum=3)
+        result['items'] = get_recommended_records_with_metadata(self.recid,
+                                                                maximum=3)
         result['loggedin'] = True if uid > 0 else False
-        result['stat'] = 'ok'
+        result['status'] = 'ok'
 
-        return json.dumps(result)
+        try:
+            output = json.dumps(result)
+        except UnicodeDecodeError as e:
+            e.level = logging.WARN
+            register_exception(alert_admin=True, prefix="UnicodeDecodeError, "
+                               "Record needs to be fixed")
+            result = {'status': 'error', "code": 2,
+                      "message": "UnicodeDecodeError"}
+            output = json.dumps(result)
+
+        return output
 
 
 class WebInterfaceRecordRestrictedPages(WebInterfaceDirectory):
