@@ -1,5 +1,5 @@
 # This file is part of Invenio.
-# Copyright (C) 2012, 2013 CERN.
+# Copyright (C) 2012, 2013, 2015, 2016 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -46,10 +46,16 @@ from invenio import webjournal_utils
 from invenio.webinterface_handler import wash_urlargd, WebInterfaceDirectory
 from invenio.urlutils import make_canonical_urlargd, redirect_to_url
 from invenio.messages import gettext_set_language
-from invenio.search_engine import \
-     guess_primary_collection_of_a_record, get_colID, record_exists, \
-     create_navtrail_links, check_user_can_view_record, record_empty, \
-     is_user_owner_of_record
+from invenio.search_engine import (
+     check_user_can_view_record,
+     create_navtrail_links,
+     get_colID,
+     get_merged_recid,
+     guess_primary_collection_of_a_record,
+     is_user_owner_of_record,
+     record_empty,
+     record_exists
+)
 from invenio.bibdocfile import BibRecDocs, normalize_format, file_strip_ext, \
     stream_restricted_icon, BibDoc, InvenioBibDocFileError, \
     get_subformat_from_format
@@ -81,13 +87,28 @@ class WebInterfaceFilesPages(WebInterfaceDirectory):
         filename = component
 
         def getfile(req, form):
+            # Check if the record of the file has been merged
+            # if the /record/1 has been merged to /record/2 then
+            # /record/1/files/foo.pdf will redirect to /record/2/files/foo.pdf
+            record_status = record_exists(self.recid)
+            merged_recid = get_merged_recid(self.recid)
+            if record_status == -1 and merged_recid:
+                # Build the url for the file in merged record
+                url = "{0}/{1}/{2}/files/{3}".format(
+                    CFG_SITE_URL,
+                    CFG_SITE_RECORD,
+                    merged_recid,
+                    filename
+                )
+                return redirect_to_url(req, url)
+
             args = wash_urlargd(form, bibdocfile_templates.files_default_urlargd)
             ln = args['ln']
             if filename[:9] == "allfiles-":
-                files_size = filename[9:]
+                filesizes = filename[9:]
                 # stream a tar package to the user
                 brd = BibRecDocs(self.recid)
-                brd.stream_archive_of_latest_files(req, files_size)
+                brd.stream_archive_of_latest_files(req, filesizes)
                 return
 
             _ = gettext_set_language(ln)
