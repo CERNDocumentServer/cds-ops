@@ -1657,7 +1657,7 @@ class BibDoc(object):
         except Exception, e:
             run_sql('DELETE FROM bibdoc WHERE id=%s', (doc_id, ))
             register_exception(alert_admin=True)
-            raise InvenioBibDocFileError, e
+            raise
 
         # the object has been created: linking to bibliographical records
         doc = BibDoc(doc_id)
