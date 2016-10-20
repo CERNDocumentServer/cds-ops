@@ -28,6 +28,10 @@ if CFG_DEVEL_SITE:
         remote_debugger.start_file_changes_monitor()
     except:
         pass
+    # enable remote debuggin with wdb <https://github.com/Kozea/wdb>
+    import os
+    os.environ['WDB_NO_BROWSER_AUTO_OPEN'] = 'True'
+
 
 # wrap warnings (usually from sql queries) to log the traceback
 # of their origin for debugging
