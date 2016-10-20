@@ -20,7 +20,7 @@
 """
 WebJournal element - Prints main (horizontal) navigation menu
 """
-from invenio.legacy.webjournal_utils import \
+from invenio.webjournal_utils import \
      parse_url_string, \
      make_journal_url, \
      get_journal_categories
@@ -53,13 +53,34 @@ def format_element(bfo, category_prefix, category_suffix, separator=" | ",
     )
 
     # Build the links to categories
+    new_bulletin_urls = {
+        'News Articles': 'https://home.cern/%scern-people',
+        'Official News': 'https://home.cern/%scern-people/official-communications',
+        'Announcements': 'https://home.cern/%scern-people/announcements',
+        'Events': 'https://home.cern/%scern-people/events',
+        'Training and Development': None
+    }
     categories_links = []
     for category in journal_categories:
         # Create URL
-        category_url = make_journal_url(bfo.user_info['uri'],
-                                        {'category': category,
-                                         'recid': '',
-                                         'ln': bfo.lang})
+        issue_year, issue_number = args['issue_year'], args['issue_number']
+        if journal_name == 'CERNBulletin' and \
+           category in new_bulletin_urls and \
+           (issue_year > 2016 or
+           (issue_year == 2016 and issue_number > 41)):
+            if not new_bulletin_urls[category]:
+                continue
+            else:
+                if ln != 'fr':
+                    lang = ''
+                else:
+                    lang = 'fr/'
+                category_url = new_bulletin_urls[category] % lang
+        else:
+            category_url = make_journal_url(bfo.user_info['uri'],
+                                            {'category': category,
+                                             'recid': '',
+                                             'ln': bfo.lang})
         # Create HTML link
         linkattrd = {}
         if category.lower() == selected_category.lower():
