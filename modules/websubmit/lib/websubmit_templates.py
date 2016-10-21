@@ -2933,7 +2933,13 @@ class Template:
         # Does this submission allow custom authors or only the suggested ones?
         custom_authors_p = extra_options.get("allow_custom_authors", False)
         if custom_authors_p:
-            custom_authors_script = """
+            # Sometimes we don't want to valide the input for a custom author
+            # (for example in DGO submission, where they don't put CERN
+            # people, but completelly random people and they still want to
+            # have the autocompletion)
+            validate_input = extra_options.get("validate_input", True)
+            if validate_input:
+                custom_authors_script = """
 if (typeof datum === "undefined") {
     if (typeof document.getElementById('author_textbox').value === "undefined") {
         return;
@@ -2969,10 +2975,36 @@ if (typeof datum === "undefined") {
         return;
     }
 }"""
-            custom_authors_text = """
+                custom_authors_text = """
 <br />
 If you wish to enter a custom author please use this format: &quot;<span style="color: blue;">Lastname, Firstname: Affiliation</span>&quot;"""
-            custom_authors_button = """
+                custom_authors_button = """
+<button id="select_author_button" style="vertical-align:bottom; height:40px;">Add Author</button>
+<script>
+$(document).ready(function(){
+    $( "#select_author_button" ).on('click', function(event){
+      event.preventDefault();
+      AppendAuthorToAuthorHiddenInput();
+      });
+});
+</script>"""
+            else:
+                # Don't validate the author's name format, save it as it is
+                custom_authors_script = """
+if (typeof datum === "undefined") {
+    if (typeof document.getElementById('author_textbox').value === "undefined") {
+        return;
+    }
+    datum = {};
+    split_author = document.getElementById('author_textbox').value;
+    datum['name'] = split_author;
+    datum['firstname'] = undefined;
+    datum['affiliation'] = undefined;
+}"""
+                custom_authors_text = """
+<br />
+If you wish to enter a custom author please try to use format close to the following: &quot;<span style="color: blue;">Lastname, Firstname: Affiliation</span>&quot;"""
+                custom_authors_button = """
 <button id="select_author_button" style="vertical-align:bottom; height:40px;">Add Author</button>
 <script>
 $(document).ready(function(){
