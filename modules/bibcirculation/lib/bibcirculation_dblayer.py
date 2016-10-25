@@ -345,7 +345,6 @@ def get_loan_request_by_status(status):
                   WHERE lr.id_crcBORROWER=bor.id AND it.barcode=lr.barcode AND
                         lib.id = it.id_crcLIBRARY AND lr.status=%s
                         AND lr.period_of_interest_from <= NOW()
-                        AND lr.period_of_interest_to >= NOW()
                ORDER BY lr.request_date"""
 
     res = run_sql(query , (status, ))
