@@ -108,9 +108,11 @@ def format_element(bfo, display_date='yes', display_issue_number='yes',
             date_text = get_i18n_day_name(issue_release_time.isoweekday(),
                                           display_week_day,
                                           ln) + ' '
-        month = get_i18n_month_name(issue_release_time.month,
-                                    display_month,
-                                    ln=ln)
+        month = get_i18n_month_name(
+            issue_release_time.month,
+            display=display_month if issue_release_time.month != 5 else 'short',
+            ln=ln
+        )
         date_text += issue_release_time.strftime("%d " + month + " %Y").lstrip('0')
 
     issue_url = make_journal_url(bfo.user_info['uri'],
