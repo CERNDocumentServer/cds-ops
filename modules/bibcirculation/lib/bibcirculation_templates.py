@@ -2246,8 +2246,8 @@ onClick="location.href='%s/admin2/bibcirculation/create_loan?ln=%s&request_id=%s
                 name = user_info[0]
                 user_id = user_info[2]
                 out += """
-                       <option value='%s'>%s
-                       """ % (name, user_id)
+                       <option value="%s">%s
+                       """ % (cgi.escape(name, True), user_id)
 
             out += """
                     </select>
@@ -2992,7 +2992,7 @@ onClick="location.href='%s/admin2/bibcirculation/create_loan?ln=%s&request_id=%s
               """ % (CFG_SITE_URL)
             for recid in result:
                 out += """
-                       <option value ='%s'>%s
+                       <option value ="%s">%s
 
                        """ % (recid, book_title_from_MARC(recid))
 
@@ -3494,9 +3494,9 @@ onClick="location.href='%s/admin2/bibcirculation/create_loan?ln=%s&request_id=%s
             for (borrower_id, ccid, name, email,
                  phone, address, mailbox) in result:
                 out += """
-                       <option value ='%s,%s,%s,%s,%s,%s,%s'>%s
-                       """ % (borrower_id, ccid, name, email, phone,
-                              address, mailbox, name)
+                       <option value="%s,%s,%s,%s,%s,%s,%s">%s
+                       """ % (borrower_id, ccid, cgi.escape(name, True), email,
+                              phone, address, mailbox, name)
 
             out += """
                     </select>
@@ -9940,9 +9940,9 @@ onClick="location.href='%s/admin2/bibcirculation/get_item_requests_details?recid
             for (borrower_id, ccid, name, email,
                  phone, address, mailbox) in result:
                 out += """
-                       <option value ='%s,%s,%s,%s,%s,%s,%s'>%s
-                       """ % (borrower_id, ccid, name, email, phone,
-                              address, mailbox, name)
+                       <option value="%s,%s,%s,%s,%s,%s,%s">%s
+                       """ % (borrower_id, ccid, cgi.escape(name, True), email,
+                              phone, address, mailbox, name)
 
             out += """
                     </select>
@@ -10827,8 +10827,8 @@ onClick="location.href='%s/admin2/bibcirculation/get_item_requests_details?recid
             for (borrower_id, ccid, name, email,
                  phone, address, mailbox) in result:
                 out += """
-                       <option value ='%s,%s,%s,%s,%s,%s,%s'>%s
-                       """ % (borrower_id, ccid, name, email,
+                       <option value="%s,%s,%s,%s,%s,%s,%s">%s
+                       """ % (borrower_id, ccid, cgi.escape(name, True), email,
                               phone, address, mailbox, name)
 
             out += """
@@ -14092,7 +14092,7 @@ onClick="location.href='%s/admin2/bibcirculation/get_item_requests_details?recid
             for (library_to, library_name) in result:
                 if library_to != library_id:
                     out += """
-                                                <option value ='%s'>%s
+                                                <option value="%s">%s
 
                        """ % (library_to, library_name)
 
