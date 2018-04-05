@@ -81,11 +81,15 @@ def Mail_Submitter(parameters, curdir, form, user_info=None):
     sequence_id = bibtask_allocate_sequenceid(curdir)
     # retrieve report number
     edsrn = parameters['edsrn']
+    if edsrn != '' and os.path.exists("%s/%s" % (curdir,edsrn)):
+        fp = open("%s/%s" % (curdir,edsrn),"r")
+        rn = fp.read()
+        fp.close()
+        rn = re.sub("[\n\r]+","",rn)
+    else:
+        rn = 'No Report Number'
+
     newrnin = parameters['newrnin']
-    fp = open("%s/%s" % (curdir,edsrn),"r")
-    rn = fp.read()
-    fp.close()
-    rn = re.sub("[\n\r]+","",rn)
     if newrnin != "" and os.path.exists("%s/%s" % (curdir,newrnin)):
         fp = open("%s/%s" % (curdir,newrnin),"r")
         additional_rn = fp.read()
