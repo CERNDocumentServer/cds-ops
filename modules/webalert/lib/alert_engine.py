@@ -294,6 +294,7 @@ def get_record_ids(argstr, date_from, date_until):
     f3      = argd.get('f3', [])
     m3      = argd.get('m3', [])
     sc      = argd.get('sc', [])
+    dt      = argd.get('dt', 'c')
 
     d1y, d1m, d1d = _date_to_tuple(date_from)
     d2y, d2m, d2d = _date_to_tuple(date_until)
@@ -311,7 +312,7 @@ def get_record_ids(argstr, date_from, date_until):
     washed_colls = wash_colls(cc, c, sc, 0)
     hosted_colls = washed_colls[3]
     if hosted_colls:
-        req_args = "p=%s&f=%s&d1d=%s&d1m=%s&d1y=%s&d2d=%s&d2m=%s&d2y=%s&ap=%i" % (p, f, d1d, d1m, d1y, d2d, d2m, d2y, 0)
+        req_args = "p=%s&f=%s&d1d=%s&d1m=%s&d1y=%s&d2d=%s&d2m=%s&d2y=%s&ap=%i&dt=%s" % (p, f, d1d, d1m, d1y, d2d, d2m, d2y, 0, dt)
         external_records = calculate_external_records(req_args, [p, p1, p2, p3], f, hosted_colls, CFG_EXTERNAL_COLLECTION_TIMEOUT, CFG_EXTERNAL_COLLECTION_MAXRESULTS_ALERTS)
     else:
         external_records = ([], [])
@@ -319,7 +320,7 @@ def get_record_ids(argstr, date_from, date_until):
     recids = perform_request_search(of='id', p=p, c=c, cc=cc, f=f, so=so, sp=sp, ot=ot,
                                   aas=aas, p1=p1, f1=f1, m1=m1, op1=op1, p2=p2, f2=f2,
                                   m2=m2, op2=op2, p3=p3, f3=f3, m3=m3, sc=sc, d1y=d1y,
-                                  d1m=d1m, d1d=d1d, d2y=d2y, d2m=d2m, d2d=d2d)
+                                  d1m=d1m, d1d=d1d, d2y=d2y, d2m=d2m, d2d=d2d, dt=dt)
 
     return (recids, external_records)
 
