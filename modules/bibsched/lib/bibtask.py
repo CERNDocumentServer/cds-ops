@@ -389,8 +389,8 @@ def create_logfiles_handlers(task_id, formatter):
     std_dest = get_and_create_task_log_path(task_id, 'log')
     err_dest = get_and_create_task_log_path(task_id, 'err')
 
-    std_logger = logging.handlers.RotatingFileHandler(std_dest, 'a', 5*1024*1024, 10)
-    err_logger = logging.handlers.RotatingFileHandler(err_dest, 'a', 5*1024*1024, 10)
+    std_logger = logging.handlers.RotatingFileHandler(std_dest, 'a', 2*1024*1024, 10)
+    err_logger = logging.handlers.RotatingFileHandler(err_dest, 'a', 2*1024*1024, 10)
 
     std_logger.setFormatter(formatter)
     err_logger.setFormatter(formatter)
