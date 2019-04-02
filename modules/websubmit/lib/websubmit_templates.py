@@ -2898,13 +2898,13 @@ class Template:
         return '''
          <script src="%(siteurl)s/js/jquery.mathpreview.js" type="text/javascript"></script>
          <script type="text/javascript">
-         <!--
-         $(document).ready(function() {
+         
+         jQuery(document).ready(function() {
          $('textarea[name$="TITLE"], input[type="text"][name$="TITLE"],textarea[name$="ABSTRACT"], input[type="text"][name$="ABSTRACT"], textarea[name$="TTL"], input[type="text"][name$="TTL"], textarea[name$="ABS"], input[type="text"][name$="ABS"], textarea[name$="ABSTR"], input[type="text"][name$="ABSTR"], .mathpreview textarea, .mathpreview input[type="text"], input[type="text"].mathpreview, textarea.mathpreview').mathpreview(
          {'help-label': '%(help-label)s',
           'help-url'  : '%(siteurl)s/help/submit-guide#math-markup'});
          })
-         -->
+         
          </script>''' % {
          'siteurl': https and CFG_SITE_SECURE_URL or CFG_SITE_URL,
          'help-label': escape_javascript_string(_("Use '\\$' delimiters to write LaTeX markup. Eg: \\$e=mc^{2}\\$")),
