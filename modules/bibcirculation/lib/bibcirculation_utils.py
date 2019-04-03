@@ -173,6 +173,9 @@ def get_book_cover(isbn):
     @return book cover
     """
 
+    return "%s/img/book_cover_placeholder.gif" % (CFG_SITE_URL)
+    # disabled because Amazon APIs require signature with secret
+
     from xml.dom import minidom
 
     # connect to AWS
