@@ -3050,6 +3050,17 @@ if (typeof datum === "undefined") {
 <script type="text/javascript" src="%(CFG_SITE_URL)s/js/json2.js"></script>
 <script type="text/javascript" src="%(CFG_SITE_URL)s/js/es5-shim.min.js"></script>
 
+<script id="copyEmail">
+    function copyEmail(element){
+       var email = $(element).parent().parent().find('.author-row-body-email').text();
+       var $temp = $("<input>");
+       $("body").append($temp);
+       $temp.val(email).select();
+       document.execCommand("copy");
+       $temp.remove();
+    };
+</script>
+
 <script id="author-row-template" type="text/x-handlebars-template">
     <div id="{{index}}" class="author-row websubmit_author_list">
         <div class="author-row-header">
@@ -3063,9 +3074,10 @@ if (typeof datum === "undefined") {
             </div>
         </div>
         <div class="author-row-body">
-            <div class="author-row-body-email">
-                {{email}}
-            </div>
+            <div style="display: inline-block;" class="author-row-body-email">{{email}}</div>
+            {{#if email}}
+                <div style="display: inline-block;"><a style="cursor: pointer; font-size: 12px; margin-left: 7px" onClick="copyEmail(this)">[copy e-mail]</a></div>
+            {{/if}}
             <div class="author-row-body-affiliation">
                 {{affiliation}}
             </div>
