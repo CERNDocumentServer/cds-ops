@@ -1,5 +1,5 @@
 # This file is part of Invenio.
-# Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 CERN.
+# Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2016 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -350,8 +350,7 @@ def __displayDocument(req, doctype, categ, RN, send, ln = CFG_SITE_LANG):
     else:
         # Was not found in the pending directory. Already approved?
         try:
-            (authors, title, sysno) = getInfo(RN)
-            newrn = RN
+            (authors, title, sysno, newrn) = getInfo(RN)
             if sysno is None:
                 return _("Unable to display document.")
         except:
@@ -1509,7 +1508,7 @@ def get_brief_doc_details_from_repository(reportnumber):
 def getInfo(RN):
     """
     Retrieve basic info from record with given report number.
-    Returns (authors, title, sysno)
+    Returns (authors, title, sysno, newrn)
     """
     authors = None
     title = None
@@ -1520,8 +1519,13 @@ def getInfo(RN):
         sysno = int(recids.tolist()[0])
         authors = ','.join(get_fieldvalues(sysno, "100__a") + get_fieldvalues(sysno, "700__a"))
         title = ','.join(get_fieldvalues(sysno, "245__a"))
-
-    return (authors, title, sysno)
+    #special case for CERN
+    if RN.startswith('ATL'):
+        try:
+            newrn = get_fieldvalues(list(search_pattern(p=RN, f='088'))[0], '037__a')[0]
+        except:
+            newrn = RN
+    return (authors, title, sysno, newrn)
 
 #seek info in pending directory
 def getInPending(doctype, categ, RN):
