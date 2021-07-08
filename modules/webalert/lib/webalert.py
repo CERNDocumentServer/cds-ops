@@ -630,3 +630,67 @@ def count_user_alerts_for_given_query(id_user,
     result = run_sql(query, params)
 
     return result[0][0]
+
+
+def APD_alert(report_number, user_email, subscribe=True):
+    """
+    Register or deregister an alert in the database for ATLAS Publication Draft
+    """
+
+    success = True
+
+    # The alert shoud be register for the root report number
+    # ATLAS-HIGG-2016-05 insted of ATLAS-HIGG-2016-05-002
+    try:
+        report_number = '-'.join(report_number.split('-')[:-1])
+    except Error:
+        success = False
+
+    if subscribe:
+        try:
+            run_sql("INSERT INTO ATLASPublDraft_alert (report_number, user_email, date_added) VALUES (%s, %s, NOW())", (report_number, user_email))
+        except Error:
+            success = False
+    else:
+        try:
+            res = run_sql("DELETE FROM ATLASPublDraft_alert WHERE report_number=%s AND user_email=%s", (report_number, user_email))
+        except Error:
+            success = False
+
+    return success
+
+
+def APD_is_alert_set(report_number, user_email):
+    """
+    Check if an alert is set for a particulart report number and user email.
+    """
+    # The alert is registered for the root report number
+    # ATLAS-HIGG-2016-05 insted of ATLAS-HIGG-2016-05-002
+    try:
+        report_number = '-'.join(report_number.split('-')[:-1])
+    except Error:
+        return False
+
+    try:
+        run_sql("SELECT report_number FROM ATLASPublDraft_alert WHERE report_number=%s and user_email=%s", (report_number, user_email))[0][0]
+    except IndexError:
+        return False
+
+    return True
+
+
+def APD_get_subscribed_emails(report_number):
+    """
+    Return the list of emails subscribed for a particular report number
+    """
+
+    # The alert is registered for the root report number
+    # ATLAS-HIGG-2016-05 insted of ATLAS-HIGG-2016-05-002
+    try:
+        report_number = '-'.join(report_number.split('-')[:-1])
+    except Error:
+        return None
+
+    res = run_sql("SELECT user_email FROM ATLASPublDraft_alert WHERE report_number=%s", (report_number,))
+
+    return [item[0] for item in res]

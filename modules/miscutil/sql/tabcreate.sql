@@ -3754,6 +3754,13 @@ CREATE TABLE IF NOT EXISTS user_query_basket (
   KEY alert_name (alert_name)
 ) ENGINE=MyISAM;
 
+CREATE TABLE IF NOT EXISTS ATLASPublDraft_alert (
+  report_number varchar(40) NOT NULL,
+  user_email varchar(255) NOT NULL,
+  date_added datetime NOT NULL default '0000-00-00 00:00:00',
+  PRIMARY KEY (report_number, user_email)
+) ENGINE=MyISAM;
+
 -- baskets
 CREATE TABLE IF NOT EXISTS bskBASKET (
   id int(15) unsigned NOT NULL auto_increment,

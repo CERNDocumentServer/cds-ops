@@ -21,6 +21,8 @@ __revision__ = "$Id$"
 
 __lastupdated__ = """$Date$"""
 
+import re
+
 from invenio.config import CFG_SITE_SECURE_URL, CFG_SITE_NAME, \
   CFG_ACCESS_CONTROL_LEVEL_SITE, CFG_SITE_NAME_INTL, CFG_SITE_LANG
 from invenio.webpage import page
@@ -32,13 +34,17 @@ from invenio.webalert import perform_input_alert, \
                              perform_pause_alert, \
                              perform_resume_alert, \
                              perform_request_youralerts_popular, \
-                             AlertError
+                             AlertError, \
+                             APD_alert
+
 from invenio.webuser import getUid, page_not_authorized, isGuestUser
 from invenio.webinterface_handler import wash_urlargd, WebInterfaceDirectory
 from invenio.urlutils import redirect_to_url, make_canonical_urlargd
 from invenio.webstat import register_customevent
 from invenio.errorlib import register_exception
 from invenio.webuser import collect_user_info
+from invenio.search_engine import perform_request_search, \
+                                  check_user_can_view_record
 
 from invenio.messages import gettext_set_language
 import invenio.template
@@ -57,7 +63,8 @@ class WebInterfaceYourAlertsPages(WebInterfaceDirectory):
                 'remove',
                 'pause',
                 'resume',
-                'popular']
+                'popular',
+                'APD']
 
     def index(self, req, dummy):
         """Index page."""
@@ -778,3 +785,72 @@ class WebInterfaceYourAlertsPages(WebInterfaceDirectory):
                     lastupdated=__lastupdated__,
                     navmenuid='youralerts',
                     secure_page_p=1)
+
+    def APD(self, req, form):
+        """
+        Handler for subscribing/unsubscribing from ATLAS Publication Drafts
+        alerts.
+        """
+
+        argd = wash_urlargd(form, {'RN': (str, None),
+                                   'subscribe': (int, 1),
+                                   'ln': (str, CFG_SITE_LANG),
+                                   }
+                            )
+
+        uid = getUid(req)
+        RN = argd['RN']
+        subscribe = argd['subscribe']
+
+        if CFG_ACCESS_CONTROL_LEVEL_SITE >= 1:
+            return page_not_authorized(req, "%s/youralerts/APD" %
+                                            (CFG_SITE_SECURE_URL,),
+                                       navmenuid="youralerts")
+
+        elif uid == -1 or isGuestUser(uid):
+            return redirect_to_url(req, "%s/youraccount/login%s" %
+                                        (CFG_SITE_SECURE_URL,
+                                         make_canonical_urlargd(
+                                          {'referer': "%s/youralerts/APD%s" % (
+                                             CFG_SITE_SECURE_URL,
+                                             make_canonical_urlargd(argd, {})),
+                                           'ln': argd['ln']},
+                                           {})
+                                         )
+                                   )
+
+        user_info = collect_user_info(req)
+
+        # check that the report number followes a specific pattern
+        # (that we are dealing with an ATLAS Publication Draft)
+        ATLASPublDraft_pattern = re.compile(r'^ATLAS-[A-Z]+-\d{4}-\d+-\d{3}$')
+        if not ATLASPublDraft_pattern.match(RN):
+            return page_not_authorized(req, "../",
+                                       text="You are not authorized to set up alerts for this report number.")
+
+        # find the recid associated
+        try:
+            recid = perform_request_search(p='"{0}"'.format(RN), f='reportnumber', c=['ATLAS Publication Drafts'])[0]
+        except IndexError:
+            return page_not_authorized(req, "../",
+                                       text="You are not authorized to set up alerts for this report number.")
+
+        # check that user can access the record
+        (auth_code, dummy) = check_user_can_view_record(user_info, recid)
+        if auth_code != 0:
+            return page_not_authorized(req, "../",
+                                       text="You are not authorized to set up alerts for this record.")
+
+        success = False
+
+        if user_info['email']:
+            if subscribe:
+                success = APD_alert(RN, user_info['email'], True)
+            else:
+                success = APD_alert(RN, user_info['email'], False)
+
+        if not success:
+            return page_not_authorized(req, "../",
+                                       text="You are not authorized to subscribe or unsubscribe for alerts for this record.")
+
+        return redirect_to_url(req, "{0}/record/{1}".format(CFG_SITE_SECURE_URL, recid))
