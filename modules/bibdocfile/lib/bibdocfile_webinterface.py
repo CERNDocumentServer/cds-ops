@@ -1,5 +1,5 @@
 # This file is part of Invenio.
-# Copyright (C) 2012, 2013, 2015 CERN.
+# Copyright (C) 2012, 2013, 2015, 2016, 2017 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -46,10 +46,17 @@ from invenio import webjournal_utils
 from invenio.webinterface_handler import wash_urlargd, WebInterfaceDirectory
 from invenio.urlutils import make_canonical_urlargd, redirect_to_url
 from invenio.messages import gettext_set_language
-from invenio.search_engine import \
-     guess_primary_collection_of_a_record, get_colID, record_exists, \
-     create_navtrail_links, check_user_can_view_record, record_empty, \
-     is_user_owner_of_record
+from invenio.search_engine import (
+     check_user_can_view_record,
+     create_navtrail_links,
+     get_colID,
+     get_fieldvalues,
+     get_merged_recid,
+     guess_primary_collection_of_a_record,
+     is_user_owner_of_record,
+     record_empty,
+     record_exists
+)
 from invenio.bibdocfile import BibRecDocs, normalize_format, file_strip_ext, \
     stream_restricted_icon, BibDoc, InvenioBibDocFileError, \
     get_subformat_from_format
@@ -70,6 +77,9 @@ from invenio.bibdocfile_managedocfiles import \
 bibdocfile_templates = invenio.template.load('bibdocfile')
 from invenio.obelixutils import obelix, clean_user_info
 
+# If the 980__a contains any of the values it will redirect any of the
+# merged files to the first available file of the new record
+REDIRECT_TO_FIRST_FILE = ['OLDBROCHURE', 'BROCHURE', ]
 
 class WebInterfaceFilesPages(WebInterfaceDirectory):
 
@@ -82,13 +92,14 @@ class WebInterfaceFilesPages(WebInterfaceDirectory):
         filename = component
 
         def getfile(req, form):
+
             args = wash_urlargd(form, bibdocfile_templates.files_default_urlargd)
             ln = args['ln']
             if filename[:9] == "allfiles-":
-                files_size = filename[9:]
+                filesizes = filename[9:]
                 # stream a tar package to the user
                 brd = BibRecDocs(self.recid)
-                brd.stream_archive_of_latest_files(req, files_size)
+                brd.stream_archive_of_latest_files(req, filesizes)
                 return
 
             _ = gettext_set_language(ln)
@@ -106,6 +117,35 @@ class WebInterfaceFilesPages(WebInterfaceDirectory):
                                            navmenuid='submit')
 
             if record_exists(self.recid) < 1:
+                # Check if the record of the file has been merged
+                # if the /record/1 has been merged to /record/2 then
+                # /record/1/files/foo.pdf will redirect to /record/2/files/foo.pdf
+                merged_recid = get_merged_recid(self.recid)
+                if merged_recid:
+                    _filename = filename
+                    try:
+                        # If the 980__a matches the REDIRECT_TO_FIRST_FILE
+                        _collections = get_fieldvalues(self.recid, '980__a')
+                        if any(x in REDIRECT_TO_FIRST_FILE for x in _collections):
+                            # Get the first file from the new record
+                            _bib = BibRecDocs(merged_recid)
+                            # Find the filename of the first bibdocfile
+                            _filename = "{0}.{1}".format(
+                                _bib.get_bibdoc_names()[0],
+                                filename[-3:]
+                            )
+                    except Exception:
+                        pass
+                    # Build the url for the file in merged record
+                    url = "{0}/{1}/{2}/files/{3}".format(
+                        CFG_SITE_URL,
+                        CFG_SITE_RECORD,
+                        merged_recid,
+                        _filename
+                    )
+                    return redirect_to_url(
+                        req, url, redirection_type=apache.HTTP_MOVED_PERMANENTLY
+                    )
                 msg = "<p>%s</p>" % _("Requested record does not seem to exist.")
                 return warning_page(msg, req, ln)
 
