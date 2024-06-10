@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # This file is part of Invenio.
-# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2013, 2014, 2015 CERN.
+# Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2013, 2014, 2015, 2017 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -493,8 +493,7 @@ def get_html_text_editor(name, id=None, content='', textual_content=None, width=
     'textarea', but not when editor_type equals to 'ckeditor'.
 
     NOTE: When you update the CKEditor, change the value of CKEDITOR.timestamp
-    and the parameter that is sent when ckeditor.js is imported to any
-    different value, to invalidate the browser cache.
+    to any different value, to invalidate the settings cache.
 
     @param name: *str* the name attribute of the returned editor
 
@@ -560,9 +559,9 @@ def get_html_text_editor(name, id=None, content='', textual_content=None, width=
         /* Load the script only once, or else multiple instance of the editor on the same page will not work */
         var INVENIO_CKEDITOR_ALREADY_LOADED
             if (INVENIO_CKEDITOR_ALREADY_LOADED != 1) {
-                document.write('<script type="text/javascript" src="%(CFG_SITE_URL)s/ckeditor/ckeditor.js?v=2015_09_07"><\/script>');
+                document.write('<script type="text/javascript" src="%(CFG_SITE_URL)s/ckeditor/ckeditor.js?v=2017_06_29"><\/script>');
                 /* Add custom timestamp to invalidate config files cache */
-                document.write('<script type="text/javascript">CKEDITOR.timestamp = "2015_09_07"<\/script>');
+                document.write('<script type="text/javascript">CKEDITOR.timestamp = "2017_06_29"<\/script>');
                 INVENIO_CKEDITOR_ALREADY_LOADED = 1;
             }
         //]]></script>
@@ -573,7 +572,9 @@ def get_html_text_editor(name, id=None, content='', textual_content=None, width=
           var CKEDITOR_BASEPATH = '/ckeditor/';
 
           CKEDITOR.replace( '%(name)s',
-                            {customConfig: '%(custom_configurations_path)s',
+                            {
+                            // Remove support of custom config and use vanilla ckeditor
+                            // customConfig: '%(custom_configurations_path)s',
                             toolbar: '%(toolbar)s',
                             width: '%(width)s',
                             height:'%(height)s',
@@ -619,7 +620,8 @@ def get_html_text_editor(name, id=None, content='', textual_content=None, width=
                     var selection = oEditor.getSelection();
                     var element = selection.getStartElement();
                     var parent = element.getParent();
-                    var range_split_block = true;
+                    // Turn it off
+                    var range_split_block = false;
 
                     if ( element.is("blockquote") && parent.is("body") ) {
                         if ( element.getText().trim() == "" ) {
@@ -629,8 +631,7 @@ def get_html_text_editor(name, id=None, content='', textual_content=None, width=
                             CKEDITOR.instances.msg.insertHtml("<p></p>");
                         }
                     }
-
-                    if ( range_split_block == true ) {
+                    if (range_split_block === true) {
                         var ranges = selection.getRanges(true);
                         for ( var i = ranges.length - 1 ; i > 0 ; i-- ) {
                             ranges[i].deleteContents();
