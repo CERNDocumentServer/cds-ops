@@ -33,6 +33,8 @@ pylib_DATA = __init__.py \
              dbquery_regression_tests.py \
              dataciteutils.py \
              dataciteutils_tester.py \
+             ldap_cern.py \
+             ldap_cern_unit_tests.py \
              logicutils.py \
              logicutils_unit_tests.py \
              mailutils.py \
