@@ -120,8 +120,14 @@ def OAI_Session(server, script, http_param_dict , method="POST", output="",
 
         # FIXME We should NOT use regular expressions to parse XML. This works
         # for the time being to escape namespaces.
+        # Regexp for big files (for example from Inspire will be extremally
+        # slow) but we know that the resumption token should be located at the
+        # beginning of file, so we can search only in the first 10 000
+        # characters
+        # rt_obj = re.search('<.*resumptionToken.*>(.*)</.*resumptionToken.*>',
+        #     harvested_data, re.DOTALL)
         rt_obj = re.search('<.*resumptionToken.*>(.*)</.*resumptionToken.*>',
-            harvested_data, re.DOTALL)
+            harvested_data[0:10000], re.DOTALL)
         if rt_obj is not None and rt_obj.group(1) != "":
             http_param_dict = http_param_resume(http_param_dict, rt_obj.group(1))
             i = i + 1

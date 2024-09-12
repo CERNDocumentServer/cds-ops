@@ -22,7 +22,8 @@ kb_DATA = entdec-to-latin1.kb entdec-to-utf8.kb \
 
 xsldir = $(sysconfdir)/bibconvert/config
 xsl_DATA = oaidc2marcxml.xsl oaimarc2marcxml.xsl oaiarxiv2marcxml.xsl \
-           oaidmf2marcxml.xsl authorlist2marcxml.xsl crossref2marcxml.xsl bibtex2marcxml.cfg
+           oaidmf2marcxml.xsl oaiinspire2marcxml.xsl authorlist2marcxml.xsl \
+           crossref2marcxml.xsl bibtex2marcxml.cfg
 
 EXTRA_DIST = $(kb_DATA) $(xsl_DATA)
 
