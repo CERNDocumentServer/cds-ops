@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file is part of Invenio.
-# Copyright (C) 2007, 2008, 2009, 2010, 2011 CERN.
+# Copyright (C) 2007, 2008, 2009, 2010, 2011, 2016 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -39,7 +39,6 @@ def format_element(bfo, style, separator='; ', show_icons='no', focus_on_main_fi
     """
     _ = gettext_set_language(bfo.lang)
     out = ''
-
     # Retrieve files
     (parsed_urls, old_versions, additionals) = \
                   get_files(bfo, distinguish_main_and_additional_files=focus_on_main_file.lower() == 'yes',
@@ -58,9 +57,7 @@ def format_element(bfo, style, separator='; ', show_icons='no', focus_on_main_fi
     # Build urls list.
     # Escape special chars for <a> tag value.
 
-    additional_str = ''
-    if additionals:
-        additional_str = separator + '<small>(<a '+style+' href="'+CFG_BASE_URL+'/'+ CFG_SITE_RECORD +'/'+str(bfo.recID)+'/files/">%s</a>)</small>' % _("additional files")
+    additional_str = separator + '<small>(<a '+style+' href="'+CFG_BASE_URL+'/'+ CFG_SITE_RECORD +'/'+str(bfo.recID)+'/files/">%s</a>)</small>' % _("additional files")
 
     versions_str = ''
     #if old_versions:
@@ -83,7 +80,11 @@ def format_element(bfo, style, separator='; ', show_icons='no', focus_on_main_fi
             urls = main_urls[descr]
             out += '<div><small class="detailedRecordActions">%s:</small> ' % descr
             urls_dict = {}
-            for url, name, url_format in urls:
+            has_more_than_3 = len(urls) > 3
+            for index, item in enumerate(urls):
+                if index > 2:
+                    break
+                url, name, url_format = item
                 if name not in urls_dict:
                     urls_dict[name] = [(url, url_format)]
                 else:
@@ -105,7 +106,11 @@ def format_element(bfo, style, separator='; ', show_icons='no', focus_on_main_fi
                         'url_format': escape(url_format.upper())
                     })
                 out += separator + " ".join(url_list)
-            out += additional_str + versions_str + separator + "</div>"
+            out += "{0}{1}{2}</div>".format(
+                '' if not has_more_than_3 and not additionals else additional_str,
+                versions_str,
+                separator
+            )
 
     if CFG_CERN_SITE and cern_urls:
         # Put a big file icon if only one file
