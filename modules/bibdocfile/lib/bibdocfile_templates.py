@@ -1,5 +1,5 @@
 # This file is part of Invenio.
-# Copyright (C) 2012, 2013, 2014 CERN.
+# Copyright (C) 2012, 2013, 2014, 2017 CERN.
 #
 # Invenio is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as
@@ -79,14 +79,17 @@ class Template:
         @return: the formatted representation.
         @rtype: HTML string
         """
+        def _get_ordered_bibdocs():
+            d = bibrecdocs.list_bibdocs_by_names(doctype)
+            return [d[k] for k in sorted(d)]
         t = ""
         if docname:
             try:
                 bibdocs = [bibrecdocs.get_bibdoc(docname)]
             except Exception, dummy:
-                bibdocs = bibrecdocs.list_bibdocs(doctype)
+                bibdocs = _get_ordered_bibdocs()
         else:
-            bibdocs = bibrecdocs.list_bibdocs(doctype)
+            bibdocs = _get_ordered_bibdocs()
         if bibdocs:
             types = list_types_from_array(bibdocs)
             fulltypes = []
